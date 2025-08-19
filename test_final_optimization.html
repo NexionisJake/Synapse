@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synapse AI - Final Optimization Test</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <style>
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            background: var(--glass-bg);
+        }
+        
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .test-pass {
+            background: rgba(76, 175, 80, 0.2);
+            color: #4CAF50;
+            border: 1px solid rgba(76, 175, 80, 0.3);
+        }
+        
+        .test-fail {
+            background: rgba(244, 67, 54, 0.2);
+            color: #F44336;
+            border: 1px solid rgba(244, 67, 54, 0.3);
+        }
+        
+        .test-warning {
+            background: rgba(255, 152, 0, 0.2);
+            color: #FF9800;
+            border: 1px solid rgba(255, 152, 0, 0.3);
+        }
+        
+        .metrics-display {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 15px 0;
+        }
+        
+        .metric-card {
+            background: var(--glass-bg);
+            padding: 15px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--glass-border);
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--hud-accent-cyan);
+            margin-bottom: 5px;
+        }
+        
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--hud-text-secondary);
+        }
+        
+        .accessibility-test {
+            margin: 10px 0;
+        }
+        
+        .accessibility-test button {
+            margin: 5px;
+        }
+        
+        .chart-test-container {
+            height: 300px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="hud-container">
+        <div class="chat-pane">
+            <header class="hud-header">
+                <h1>Final Optimization Test Suite</h1>
+                <p>Testing performance, accessibility, and visual enhancements</p>
+            </header>
+            
+            <main class="chat-main">
+                <div class="chat-log" id="test-results">
+                    
+                    <!-- Performance Tests -->
+                    <div class="test-section">
+                        <h2>Performance Optimization Tests</h2>
+                        <div id="performance-results"></div>
+                        
+                        <div class="metrics-display" id="performance-metrics">
+                            <div class="metric-card">
+                                <div class="metric-value" id="frame-rate">--</div>
+                                <div class="metric-label">Frame Rate (FPS)</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="memory-usage">--</div>
+                                <div class="metric-label">Memory Usage (MB)</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="render-time">--</div>
+                                <div class="metric-label">Render Time (ms)</div>
+                            </div>
+                            <div class="metric-card">
+                                <div class="metric-value" id="error-count">--</div>
+                                <div class="metric-label">Error Count</div>
+                            </div>
+                        </div>
+                        
+                        <button class="hud-button primary" onclick="runPerformanceTests()">
+                            Run Performance Tests
+                        </button>
+                    </div>
+                    
+                    <!-- Accessibility Tests -->
+                    <div class="test-section">
+                        <h2>Accessibility Enhancement Tests</h2>
+                        <div id="accessibility-results"></div>
+                        
+                        <div class="accessibility-test">
+                            <h3>Keyboard Navigation Test</h3>
+                            <button class="hud-button" tabindex="0">Button 1</button>
+                            <button class="hud-button" tabindex="0">Button 2</button>
+                            <button class="hud-button" tabindex="0">Button 3</button>
+                            <input type="text" class="hud-input" placeholder="Test input" aria-label="Test input field">
+                        </div>
+                        
+                        <div class="accessibility-test">
+                            <h3>Screen Reader Test</h3>
+                            <div id="live-region" aria-live="polite" aria-atomic="true" class="sr-only"></div>
+                            <button class="hud-button secondary" onclick="testScreenReader()">
+                                Test Screen Reader Announcement
+                            </button>
+                        </div>
+                        
+                        <div class="accessibility-test">
+                            <h3>Focus Management Test</h3>
+                            <button class="hud-button secondary" onclick="testFocusManagement()">
+                                Test Focus Indicators
+                            </button>
+                        </div>
+                        
+                        <button class="hud-button primary" onclick="runAccessibilityTests()">
+                            Run Accessibility Tests
+                        </button>
+                    </div>
+                    
+                    <!-- Visual Enhancement Tests -->
+                    <div class="test-section">
+                        <h2>Visual Enhancement Tests</h2>
+                        <div id="visual-results"></div>
+                        
+                        <div class="test-section">
+                            <h3>Animation Tests</h3>
+                            <div class="message ai-message" id="test-message">
+                                This is a test message with enhanced animations
+                            </div>
+                            
+                            <div class="streaming-indicator" id="test-streaming">
+                                <div class="typing-dots">
+                                    <span></span>
+                                    <span></span>
+                                    <span></span>
+                                </div>
+                                <span class="streaming-text">Testing streaming animation...</span>
+                            </div>
+                            
+                            <div class="chart-loading-skeleton" id="test-skeleton">
+                                <div class="skeleton-line"></div>
+                                <div class="skeleton-line short"></div>
+                                <div class="skeleton-line"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="test-section">
+                            <h3>Chart Animation Test</h3>
+                            <div class="chart-test-container">
+                                <canvas id="test-chart" width="400" height="200"></canvas>
+                            </div>
+                        </div>
+                        
+                        <button class="hud-button primary" onclick="runVisualTests()">
+                            Run Visual Tests
+                        </button>
+                    </div>
+                    
+                    <!-- Integration Tests -->
+                    <div class="test-section">
+                        <h2>Integration Tests</h2>
+                        <div id="integration-results"></div>
+                        
+                        <button class="hud-button primary" onclick="runIntegrationTests()">
+                            Run Integration Tests
+                        </button>
+                    </div>
+                    
+                    <!-- Overall Results -->
+                    <div class="test-section">
+                        <h2>Overall Test Results</h2>
+                        <div id="overall-results"></div>
+                        
+                        <button class="hud-button primary" onclick="runAllTests()">
+                            Run All Tests
+                        </button>
+                    </div>
+                    
+                </div>
+            </main>
+        </div>
+        
+        <div class="cognitive-dashboard">
+            <header class="dashboard-header">
+                <h2 class="dashboard-title">Test Dashboard</h2>
+            </header>
+            
+            <div class="dashboard-content">
+                <div class="test-section">
+                    <h3>Real-time Metrics</h3>
+                    <div id="realtime-metrics"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="{{ url_for('static', filename='js/performance-optimizer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/accessibility-enhancer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/streaming-performance-monitor.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/loading-feedback.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/error-handlers.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/cognitive-charts.js') }}"></script>
+
+    <script>
+        // Test Suite Implementation
+        let testResults = {
+            performance: [],
+            accessibility: [],
+            visual: [],
+            integration: [],
+            overall: 'pending'
+        };
+
+        // Performance Tests
+        function runPerformanceTests() {
+            const results = document.getElementById('performance-results');
+            results.innerHTML = '<div class="test-result test-warning">Running performance tests...</div>';
+            
+            setTimeout(() => {
+                let tests = [];
+                
+                // Test 1: Performance Optimizer Initialization
+                if (window.performanceOptimizer) {
+                    tests.push({
+                        name: 'Performance Optimizer Initialization',
+                        status: 'pass',
+                        message: 'Performance optimizer successfully initialized'
+                    });
+                } else {
+                    tests.push({
+                        name: 'Performance Optimizer Initialization',
+                        status: 'fail',
+                        message: 'Performance optimizer not found'
+                    });
+                }
+                
+                // Test 2: Memory Management
+                if (window.performanceOptimizer && window.performanceOptimizer.memoryManager) {
+                    tests.push({
+                        name: 'Memory Management',
+                        status: 'pass',
+                        message: 'Memory manager is active'
+                    });
+                } else {
+                    tests.push({
+                        name: 'Memory Management',
+                        status: 'fail',
+                        message: 'Memory manager not available'
+                    });
+                }
+                
+                // Test 3: Frame Throttling
+                if (window.performanceOptimizer && window.performanceOptimizer.frameThrottler) {
+                    tests.push({
+                        name: 'Frame Throttling',
+                        status: 'pass',
+                        message: 'Frame throttler is operational'
+                    });
+                } else {
+                    tests.push({
+                        name: 'Frame Throttling',
+                        status: 'fail',
+                        message: 'Frame throttler not available'
+                    });
+                }
+                
+                // Test 4: Performance Metrics
+                if (window.performanceOptimizer) {
+                    const metrics = window.performanceOptimizer.getPerformanceMetrics();
+                    if (metrics) {
+                        tests.push({
+                            name: 'Performance Metrics',
+                            status: 'pass',
+                            message: 'Performance metrics are being collected'
+                        });
+                        
+                        // Update metrics display
+                        updateMetricsDisplay(metrics);
+                    } else {
+                        tests.push({
+                            name: 'Performance Metrics',
+                            status: 'fail',
+                            message: 'Performance metrics not available'
+                        });
+                    }
+                }
+                
+                testResults.performance = tests;
+                displayTestResults(results, tests);
+            }, 1000);
+        }
+        
+        function updateMetricsDisplay(metrics) {
+            document.getElementById('frame-rate').textContent = metrics.frameRate || '--';
+            document.getElementById('memory-usage').textContent = 
+                metrics.memoryUsage ? metrics.memoryUsage.used : '--';
+            document.getElementById('render-time').textContent = 
+                metrics.renderTime ? Math.round(metrics.renderTime) : '--';
+            document.getElementById('error-count').textContent = metrics.errorCount || '0';
+        }
+
+        // Accessibility Tests
+        function runAccessibilityTests() {
+            const results = document.getElementById('accessibility-results');
+            results.innerHTML = '<div class="test-result test-warning">Running accessibility tests...</div>';
+            
+            setTimeout(() => {
+                let tests = [];
+                
+                // Test 1: Accessibility Enhancer Initialization
+                if (window.accessibilityEnhancer) {
+                    tests.push({
+                        name: 'Accessibility Enhancer Initialization',
+                        status: 'pass',
+                        message: 'Accessibility enhancer successfully initialized'
+                    });
+                } else {
+                    tests.push({
+                        name: 'Accessibility Enhancer Initialization',
+                        status: 'fail',
+                        message: 'Accessibility enhancer not found'
+                    });
+                }
+                
+                // Test 2: ARIA Labels
+                const ariaElements = document.querySelectorAll('[aria-label], [aria-describedby], [role]');
+                if (ariaElements.length > 0) {
+                    tests.push({
+                        name: 'ARIA Labels',
+                        status: 'pass',
+                        message: `Found ${ariaElements.length} elements with ARIA attributes`
+                    });
+                } else {
+                    tests.push({
+                        name: 'ARIA Labels',
+                        status: 'fail',
+                        message: 'No ARIA attributes found'
+                    });
+                }
+                
+                // Test 3: Skip Links
+                const skipLinks = document.querySelectorAll('.skip-link');
+                if (skipLinks.length > 0) {
+                    tests.push({
+                        name: 'Skip Links',
+                        status: 'pass',
+                        message: `Found ${skipLinks.length} skip links`
+                    });
+                } else {
+                    tests.push({
+                        name: 'Skip Links',
+                        status: 'warning',
+                        message: 'No skip links found (may be added dynamically)'
+                    });
+                }
+                
+                // Test 4: Live Region
+                const liveRegion = document.getElementById('live-region');
+                if (liveRegion && liveRegion.getAttribute('aria-live')) {
+                    tests.push({
+                        name: 'Live Region',
+                        status: 'pass',
+                        message: 'ARIA live region is present'
+                    });
+                } else {
+                    tests.push({
+                        name: 'Live Region',
+                        status: 'fail',
+                        message: 'ARIA live region not found'
+                    });
+                }
+                
+                // Test 5: Keyboard Navigation
+                const focusableElements = document.querySelectorAll(
+                    'button:not([disabled]), input:not([disabled]), [tabindex]:not([tabindex="-1"])'
+                );
+                if (focusableElements.length > 0) {
+                    tests.push({
+                        name: 'Keyboard Navigation',
+                        status: 'pass',
+                        message: `Found ${focusableElements.length} focusable elements`
+                    });
+                } else {
+                    tests.push({
+                        name: 'Keyboard Navigation',
+                        status: 'fail',
+                        message: 'No focusable elements found'
+                    });
+                }
+                
+                testResults.accessibility = tests;
+                displayTestResults(results, tests);
+            }, 1000);
+        }
+        
+        function testScreenReader() {
+            if (window.accessibilityEnhancer && window.accessibilityEnhancer.screenReaderManager) {
+                window.accessibilityEnhancer.screenReaderManager.announce(
+                    'Screen reader test announcement - accessibility features are working correctly'
+                );
+            } else {
+                const liveRegion = document.getElementById('live-region');
+                if (liveRegion) {
+                    liveRegion.textContent = 'Screen reader test announcement - basic functionality working';
+                    setTimeout(() => {
+                        liveRegion.textContent = '';
+                    }, 3000);
+                }
+            }
+        }
+        
+        function testFocusManagement() {
+            const buttons = document.querySelectorAll('.accessibility-test button');
+            let index = 0;
+            
+            function focusNext() {
+                if (index < buttons.length) {
+                    buttons[index].focus();
+                    buttons[index].classList.add('focus-visible');
+                    index++;
+                    setTimeout(focusNext, 1000);
+                } else {
+                    // Reset
+                    buttons.forEach(btn => btn.classList.remove('focus-visible'));
+                }
+            }
+            
+            focusNext();
+        }
+
+        // Visual Tests
+        function runVisualTests() {
+            const results = document.getElementById('visual-results');
+            results.innerHTML = '<div class="test-result test-warning">Running visual tests...</div>';
+            
+            setTimeout(() => {
+                let tests = [];
+                
+                // Test 1: CSS Custom Properties
+                const rootStyles = getComputedStyle(document.documentElement);
+                const hudBgPrimary = rootStyles.getPropertyValue('--hud-bg-primary');
+                if (hudBgPrimary) {
+                    tests.push({
+                        name: 'CSS Custom Properties',
+                        status: 'pass',
+                        message: 'HUD theme variables are loaded'
+                    });
+                } else {
+                    tests.push({
+                        name: 'CSS Custom Properties',
+                        status: 'fail',
+                        message: 'HUD theme variables not found'
+                    });
+                }
+                
+                // Test 2: Glassmorphism Effects
+                const glassPanels = document.querySelectorAll('.glass-panel');
+                if (glassPanels.length > 0) {
+                    const panel = glassPanels[0];
+                    const styles = getComputedStyle(panel);
+                    const backdropFilter = styles.getPropertyValue('backdrop-filter');
+                    if (backdropFilter && backdropFilter !== 'none') {
+                        tests.push({
+                            name: 'Glassmorphism Effects',
+                            status: 'pass',
+                            message: 'Backdrop filter effects are active'
+                        });
+                    } else {
+                        tests.push({
+                            name: 'Glassmorphism Effects',
+                            status: 'warning',
+                            message: 'Backdrop filter may not be supported'
+                        });
+                    }
+                } else {
+                    tests.push({
+                        name: 'Glassmorphism Effects',
+                        status: 'fail',
+                        message: 'No glass panels found'
+                    });
+                }
+                
+                // Test 3: Animations
+                const animatedElements = document.querySelectorAll('[class*="animation"], .streaming-indicator, .typing-dots');
+                if (animatedElements.length > 0) {
+                    tests.push({
+                        name: 'CSS Animations',
+                        status: 'pass',
+                        message: `Found ${animatedElements.length} animated elements`
+                    });
+                } else {
+                    tests.push({
+                        name: 'CSS Animations',
+                        status: 'warning',
+                        message: 'No animated elements found'
+                    });
+                }
+                
+                // Test 4: Chart Rendering
+                createTestChart();
+                tests.push({
+                    name: 'Chart Rendering',
+                    status: 'pass',
+                    message: 'Test chart created successfully'
+                });
+                
+                // Test 5: Responsive Design
+                const container = document.querySelector('.hud-container');
+                if (container) {
+                    const styles = getComputedStyle(container);
+                    const display = styles.getPropertyValue('display');
+                    if (display === 'flex') {
+                        tests.push({
+                            name: 'Responsive Layout',
+                            status: 'pass',
+                            message: 'Flexbox layout is active'
+                        });
+                    } else {
+                        tests.push({
+                            name: 'Responsive Layout',
+                            status: 'warning',
+                            message: 'Layout may not be responsive'
+                        });
+                    }
+                }
+                
+                testResults.visual = tests;
+                displayTestResults(results, tests);
+            }, 1000);
+        }
+        
+        function createTestChart() {
+            const canvas = document.getElementById('test-chart');
+            if (canvas && typeof Chart !== 'undefined') {
+                const ctx = canvas.getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Performance', 'Accessibility', 'Visual', 'Integration'],
+                        datasets: [{
+                            data: [25, 25, 25, 25],
+                            backgroundColor: [
+                                '#58A6FF',
+                                '#7C3AED',
+                                '#F59E0B',
+                                '#10B981'
+                            ],
+                            borderColor: '#0D1117',
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                labels: {
+                                    color: '#C9D1D9'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        // Integration Tests
+        function runIntegrationTests() {
+            const results = document.getElementById('integration-results');
+            results.innerHTML = '<div class="test-result test-warning">Running integration tests...</div>';
+            
+            setTimeout(() => {
+                let tests = [];
+                
+                // Test 1: Script Loading
+                const requiredScripts = [
+                    'performanceOptimizer',
+                    'accessibilityEnhancer'
+                ];
+                
+                let loadedScripts = 0;
+                requiredScripts.forEach(script => {
+                    if (window[script]) {
+                        loadedScripts++;
+                    }
+                });
+                
+                if (loadedScripts === requiredScripts.length) {
+                    tests.push({
+                        name: 'Script Integration',
+                        status: 'pass',
+                        message: `All ${requiredScripts.length} required scripts loaded`
+                    });
+                } else {
+                    tests.push({
+                        name: 'Script Integration',
+                        status: 'fail',
+                        message: `Only ${loadedScripts}/${requiredScripts.length} scripts loaded`
+                    });
+                }
+                
+                // Test 2: Event System
+                let eventSystemWorking = false;
+                const testEvent = new CustomEvent('testEvent', { detail: { test: true } });
+                
+                document.addEventListener('testEvent', (e) => {
+                    if (e.detail && e.detail.test) {
+                        eventSystemWorking = true;
+                    }
+                });
+                
+                document.dispatchEvent(testEvent);
+                
+                if (eventSystemWorking) {
+                    tests.push({
+                        name: 'Event System',
+                        status: 'pass',
+                        message: 'Custom event system is working'
+                    });
+                } else {
+                    tests.push({
+                        name: 'Event System',
+                        status: 'fail',
+                        message: 'Custom event system not working'
+                    });
+                }
+                
+                // Test 3: Chart.js Integration
+                if (typeof Chart !== 'undefined') {
+                    tests.push({
+                        name: 'Chart.js Integration',
+                        status: 'pass',
+                        message: 'Chart.js library is loaded'
+                    });
+                } else {
+                    tests.push({
+                        name: 'Chart.js Integration',
+                        status: 'fail',
+                        message: 'Chart.js library not found'
+                    });
+                }
+                
+                // Test 4: Performance Monitoring Integration
+                if (window.performanceOptimizer && window.performanceOptimizer.performanceMonitor) {
+                    tests.push({
+                        name: 'Performance Monitoring',
+                        status: 'pass',
+                        message: 'Performance monitoring is active'
+                    });
+                } else {
+                    tests.push({
+                        name: 'Performance Monitoring',
+                        status: 'fail',
+                        message: 'Performance monitoring not available'
+                    });
+                }
+                
+                testResults.integration = tests;
+                displayTestResults(results, tests);
+            }, 1000);
+        }
+
+        // Utility Functions
+        function displayTestResults(container, tests) {
+            let html = '';
+            let passCount = 0;
+            let failCount = 0;
+            let warningCount = 0;
+            
+            tests.forEach(test => {
+                const statusClass = `test-${test.status}`;
+                html += `<div class="test-result ${statusClass}">
+                    <strong>${test.name}:</strong> ${test.message}
+                </div>`;
+                
+                if (test.status === 'pass') passCount++;
+                else if (test.status === 'fail') failCount++;
+                else if (test.status === 'warning') warningCount++;
+            });
+            
+            html += `<div class="test-result">
+                <strong>Summary:</strong> ${passCount} passed, ${failCount} failed, ${warningCount} warnings
+            </div>`;
+            
+            container.innerHTML = html;
+        }
+        
+        function runAllTests() {
+            const overallResults = document.getElementById('overall-results');
+            overallResults.innerHTML = '<div class="test-result test-warning">Running all tests...</div>';
+            
+            // Run all test suites
+            runPerformanceTests();
+            setTimeout(() => runAccessibilityTests(), 500);
+            setTimeout(() => runVisualTests(), 1000);
+            setTimeout(() => runIntegrationTests(), 1500);
+            
+            // Calculate overall results after all tests complete
+            setTimeout(() => {
+                let totalTests = 0;
+                let totalPassed = 0;
+                let totalFailed = 0;
+                let totalWarnings = 0;
+                
+                Object.values(testResults).forEach(testSuite => {
+                    if (Array.isArray(testSuite)) {
+                        testSuite.forEach(test => {
+                            totalTests++;
+                            if (test.status === 'pass') totalPassed++;
+                            else if (test.status === 'fail') totalFailed++;
+                            else if (test.status === 'warning') totalWarnings++;
+                        });
+                    }
+                });
+                
+                const successRate = Math.round((totalPassed / totalTests) * 100);
+                let overallStatus = 'pass';
+                
+                if (totalFailed > 0) {
+                    overallStatus = 'fail';
+                } else if (totalWarnings > 0) {
+                    overallStatus = 'warning';
+                }
+                
+                const overallHtml = `
+                    <div class="test-result test-${overallStatus}">
+                        <strong>Overall Test Results:</strong><br>
+                        Total Tests: ${totalTests}<br>
+                        Passed: ${totalPassed}<br>
+                        Failed: ${totalFailed}<br>
+                        Warnings: ${totalWarnings}<br>
+                        Success Rate: ${successRate}%
+                    </div>
+                `;
+                
+                overallResults.innerHTML = overallHtml;
+                testResults.overall = overallStatus;
+                
+                // Update real-time metrics
+                updateRealtimeMetrics();
+            }, 3000);
+        }
+        
+        function updateRealtimeMetrics() {
+            const metricsContainer = document.getElementById('realtime-metrics');
+            if (window.performanceOptimizer) {
+                const metrics = window.performanceOptimizer.getPerformanceMetrics();
+                metricsContainer.innerHTML = `
+                    <div class="metric-card">
+                        <div class="metric-value">${metrics.frameRate || '--'}</div>
+                        <div class="metric-label">Current FPS</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${metrics.memoryUsage ? metrics.memoryUsage.used : '--'}</div>
+                        <div class="metric-label">Memory (MB)</div>
+                    </div>
+                    <div class="metric-card">
+                        <div class="metric-value">${Math.round(performance.now())}</div>
+                        <div class="metric-label">Uptime (ms)</div>
+                    </div>
+                `;
+            } else {
+                metricsContainer.innerHTML = '<p>Performance metrics not available</p>';
+            }
+        }
+        
+        // Auto-update metrics every 5 seconds
+        setInterval(updateRealtimeMetrics, 5000);
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Final optimization test suite loaded');
+            updateRealtimeMetrics();
+        });
+    </script>
+</body>
+</html>

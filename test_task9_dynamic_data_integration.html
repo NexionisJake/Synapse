@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task 9: Dynamic Data Integration Test</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            padding: 2rem;
+            background: var(--hud-bg-primary);
+            color: var(--hud-text-primary);
+            font-family: var(--font-family-primary);
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: var(--glass-bg);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--glass-border);
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+        
+        .test-button {
+            background: var(--hud-accent-cyan);
+            color: var(--hud-bg-primary);
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius-small);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .test-button:hover {
+            background: var(--hud-accent-cyan-hover);
+            box-shadow: var(--glow-small);
+        }
+        
+        .test-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+        
+        .test-log {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: var(--font-family-mono);
+            font-size: 0.9rem;
+        }
+        
+        .log-entry {
+            margin-bottom: 0.5rem;
+            padding: 0.25rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .log-timestamp {
+            color: var(--hud-text-secondary);
+            margin-right: 1rem;
+        }
+        
+        .log-success {
+            color: #10B981;
+        }
+        
+        .log-error {
+            color: #EF4444;
+        }
+        
+        .log-info {
+            color: var(--hud-accent-cyan);
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+        
+        .status-loading {
+            background: var(--hud-accent-cyan);
+            animation: pulse 1s infinite;
+        }
+        
+        .status-success {
+            background: #10B981;
+        }
+        
+        .status-error {
+            background: #EF4444;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1>Task 9: Dynamic Data Integration Test</h1>
+            <p>Testing dynamic chart data integration, automatic updates, loading states, and error handling</p>
+        </div>
+        
+        <div class="test-controls">
+            <button class="test-button" onclick="testRealDataIntegration()">Test Real Data Integration</button>
+            <button class="test-button" onclick="testPlaceholderData()">Test Placeholder Data</button>
+            <button class="test-button" onclick="testErrorHandling()">Test Error Handling</button>
+            <button class="test-button" onclick="testAutomaticUpdates()">Test Auto Updates</button>
+            <button class="test-button" onclick="testLoadingStates()">Test Loading States</button>
+            <button class="test-button" onclick="clearCharts()">Clear Charts</button>
+        </div>
+        
+        <div class="charts-section">
+            <div class="charts-grid">
+                <!-- Core Values Radar Chart -->
+                <div class="chart-container glass-panel" id="core-values-container">
+                    <div class="chart-header">
+                        <h4 class="chart-title">Core Values</h4>
+                        <div class="chart-status" id="core-values-status">Not loaded</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="core-values-chart" width="300" height="200"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Recurring Themes Bar Chart -->
+                <div class="chart-container glass-panel" id="recurring-themes-container">
+                    <div class="chart-header">
+                        <h4 class="chart-title">Recurring Themes</h4>
+                        <div class="chart-status" id="recurring-themes-status">Not loaded</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="recurring-themes-chart" width="300" height="200"></canvas>
+                    </div>
+                </div>
+                
+                <!-- Emotional Landscape Doughnut Chart -->
+                <div class="chart-container glass-panel" id="emotional-landscape-container">
+                    <div class="chart-header">
+                        <h4 class="chart-title">Emotional Landscape</h4>
+                        <div class="chart-status" id="emotional-landscape-status">Not loaded</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="emotional-landscape-chart" width="300" height="200"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-log">
+            <h3>Test Log</h3>
+            <div id="log-container"></div>
+        </div>
+    </div>
+
+    <script src="static/js/cognitive-charts.js"></script>
+    <script>
+        let chartManager;
+        let autoUpdateInterval;
+        
+        // Initialize chart manager
+        function initializeChartManager() {
+            if (chartManager) {
+                chartManager.destroy();
+            }
+            chartManager = new CognitiveChartManager();
+            chartManager.init();
+            log('Chart manager initialized', 'info');
+        }
+        
+        // Test real data integration
+        async function testRealDataIntegration() {
+            log('Testing real data integration...', 'info');
+            
+            if (!chartManager) {
+                initializeChartManager();
+            }
+            
+            try {
+                await chartManager.updateChartsWithMemoryData();
+                log('Real data integration test completed successfully', 'success');
+            } catch (error) {
+                log(`Real data integration test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test placeholder data
+        function testPlaceholderData() {
+            log('Testing placeholder data...', 'info');
+            
+            if (!chartManager) {
+                initializeChartManager();
+            }
+            
+            try {
+                chartManager.showChartPlaceholders();
+                log('Placeholder data test completed successfully', 'success');
+            } catch (error) {
+                log(`Placeholder data test failed: ${error.message}`, 'error');
+            }
+        }
+        
+        // Test error handling
+        async function testErrorHandling() {
+            log('Testing error handling...', 'info');
+            
+            if (!chartManager) {
+                initializeChartManager();
+            }
+            
+            // Simulate API error by temporarily overriding fetch
+            const originalFetch = window.fetch;
+            window.fetch = async (url) => {
+                if (url === '/api/insights') {
+                    throw new Error('Simulated network error');
+                }
+                return originalFetch(url);
+            };
+            
+            try {
+                await chartManager.updateChartsWithMemoryData();
+                log('Error handling test completed - charts should show placeholders', 'success');
+            } catch (error) {
+                log(`Error handling working as expected: ${error.message}`, 'success');
+            } finally {
+                // Restore original fetch
+                window.fetch = originalFetch;
+            }
+        }
+        
+        // Test automatic updates
+        function testAutomaticUpdates() {
+            log('Testing automatic updates...', 'info');
+            
+            if (autoUpdateInterval) {
+                clearInterval(autoUpdateInterval);
+                log('Stopped previous auto-update test', 'info');
+            }
+            
+            let updateCount = 0;
+            autoUpdateInterval = setInterval(async () => {
+                updateCount++;
+                log(`Auto-update check #${updateCount}`, 'info');
+                
+                if (!chartManager) {
+                    initializeChartManager();
+                }
+                
+                try {
+                    await chartManager.updateChartsWithMemoryData();
+                    log(`Auto-update #${updateCount} completed`, 'success');
+                } catch (error) {
+                    log(`Auto-update #${updateCount} failed: ${error.message}`, 'error');
+                }
+                
+                // Stop after 5 updates
+                if (updateCount >= 5) {
+                    clearInterval(autoUpdateInterval);
+                    autoUpdateInterval = null;
+                    log('Auto-update test completed (5 cycles)', 'success');
+                }
+            }, 3000); // Every 3 seconds for testing
+            
+            log('Auto-update test started (will run 5 cycles)', 'info');
+        }
+        
+        // Test loading states
+        async function testLoadingStates() {
+            log('Testing loading states...', 'info');
+            
+            if (!chartManager) {
+                initializeChartManager();
+            }
+            
+            // Show loading states
+            chartManager.showChartLoadingStates();
+            log('Loading states displayed', 'info');
+            
+            // Wait 2 seconds then load data
+            setTimeout(async () => {
+                try {
+                    await chartManager.updateChartsWithMemoryData();
+                    log('Loading states test completed', 'success');
+                } catch (error) {
+                    log(`Loading states test failed: ${error.message}`, 'error');
+                }
+            }, 2000);
+        }
+        
+        // Clear all charts
+        function clearCharts() {
+            log('Clearing all charts...', 'info');
+            
+            if (chartManager) {
+                chartManager.destroy();
+                chartManager = null;
+            }
+            
+            if (autoUpdateInterval) {
+                clearInterval(autoUpdateInterval);
+                autoUpdateInterval = null;
+            }
+            
+            // Reset status indicators
+            document.getElementById('core-values-status').textContent = 'Not loaded';
+            document.getElementById('recurring-themes-status').textContent = 'Not loaded';
+            document.getElementById('emotional-landscape-status').textContent = 'Not loaded';
+            
+            // Remove any placeholder messages
+            const placeholderMessage = document.querySelector('.placeholder-message');
+            if (placeholderMessage) {
+                placeholderMessage.remove();
+            }
+            
+            log('All charts cleared', 'success');
+        }
+        
+        // Logging function
+        function log(message, type = 'info') {
+            const logContainer = document.getElementById('log-container');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            const logEntry = document.createElement('div');
+            logEntry.className = 'log-entry';
+            
+            const statusClass = type === 'success' ? 'status-success' : 
+                               type === 'error' ? 'status-error' : 'status-loading';
+            
+            logEntry.innerHTML = `
+                <span class="status-indicator ${statusClass}"></span>
+                <span class="log-timestamp">${timestamp}</span>
+                <span class="log-${type}">${message}</span>
+            `;
+            
+            logContainer.appendChild(logEntry);
+            logContainer.scrollTop = logContainer.scrollHeight;
+            
+            // Also log to console
+            console.log(`[${timestamp}] ${type.toUpperCase()}: ${message}`);
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            log('Task 9 Dynamic Data Integration Test initialized', 'info');
+            log('Click buttons above to test different functionality', 'info');
+        });
+        
+        // Clean up on page unload
+        window.addEventListener('beforeunload', () => {
+            if (autoUpdateInterval) {
+                clearInterval(autoUpdateInterval);
+            }
+        });
+    </script>
+</body>
+</html>

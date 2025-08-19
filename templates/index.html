@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synapse - AI Cognitive Partner</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <!-- Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+</head>
+<body>
+    <div class="hud-container">
+        <!-- Chat Pane (70%) -->
+        <div class="chat-pane">
+            <header class="hud-header">
+                <h1 class="hud-title">SYNAPSE</h1>
+                <p class="hud-subtitle">Your AI Cognitive Partner</p>
+                <nav class="dashboard-nav">
+                    <a href="{{ url_for('prompts') }}" class="hud-button secondary">
+                        <span class="button-icon">⚙️</span>
+                        Prompts
+                    </a>
+                </nav>
+                <div class="status-indicators">
+                    <div class="connection-status connected" id="connection-status">
+                        <span>ONLINE</span>
+                    </div>
+                    <div class="ai-service-status ready" id="ai-service-status">
+                        <span>AI READY</span>
+                    </div>
+                </div>
+            </header>
+            
+            <main class="chat-main">
+                <div id="chat-log" class="chat-log">
+                    <!-- Chat messages will be displayed here -->
+                </div>
+                
+                <div class="input-section glass-panel">
+                    <div class="input-container">
+                        <input type="text" id="message-input" class="hud-input" placeholder="Enter command or query..." autocomplete="off">
+                        <button id="send-button" class="hud-button primary" type="button">
+                            <span class="button-icon">→</span>
+                            SEND
+                        </button>
+                    </div>
+                </div>
+            </main>
+        </div>
+        
+        <!-- Cognitive Dashboard (30%) -->
+        <div class="cognitive-dashboard">
+            <header class="dashboard-header">
+                <h2 class="dashboard-title">COGNITIVE ANALYSIS</h2>
+                <div class="dashboard-controls">
+                    <button class="hud-button secondary" id="refresh-dashboard">
+                        <span class="button-icon">↻</span>
+                    </button>
+                </div>
+            </header>
+            
+            <div class="dashboard-content">
+                <!-- Loading state -->
+                <div id="loading-state" class="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p class="hud-text-secondary">Loading your insights...</p>
+                </div>
+                
+                <!-- Error state -->
+                <div id="error-state" class="error-state" style="display: none;">
+                    <div class="error-icon">⚠️</div>
+                    <h3 class="hud-text-primary">Unable to load insights</h3>
+                    <p id="error-message" class="hud-text-secondary">There was an error loading your cognitive data.</p>
+                    <button id="retry-button" class="hud-button primary">
+                        <span class="button-icon">↻</span>
+                        Try Again
+                    </button>
+                </div>
+                
+                <!-- Empty state -->
+                <div id="empty-state" class="empty-state" style="display: none;">
+                    <div class="empty-icon">🧠</div>
+                    <h3 class="hud-text-primary">No insights yet</h3>
+                    <p class="hud-text-secondary">Start having conversations to build your cognitive memory.</p>
+                </div>
+                
+                <!-- Dashboard content -->
+                <div id="dashboard-content-inner" class="dashboard-content-inner" style="display: none;">
+                    <!-- Statistics Overview -->
+                    <section class="stats-section hud-card">
+                        <h3 class="section-title">Memory Overview</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card glass-panel glow-hover">
+                                <div class="stat-number hud-text-accent" id="total-insights">0</div>
+                                <div class="stat-label hud-text-secondary">Insights</div>
+                            </div>
+                            <div class="stat-card glass-panel glow-hover">
+                                <div class="stat-number hud-text-accent" id="total-conversations">0</div>
+                                <div class="stat-label hud-text-secondary">Conversations</div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- Interactive Charts -->
+                    <section class="charts-section">
+                        <h3 class="section-title">Cognitive Patterns</h3>
+                        <div class="charts-grid">
+                            <!-- Core Values Radar Chart -->
+                            <div class="chart-container glass-panel" id="core-values-container">
+                                <div class="chart-header">
+                                    <h4 class="chart-title">Core Values</h4>
+                                    <div class="chart-status" id="core-values-status">Loading...</div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="core-values-chart" width="300" height="200"></canvas>
+                                </div>
+                            </div>
+                            
+                            <!-- Recurring Themes Bar Chart -->
+                            <div class="chart-container glass-panel" id="recurring-themes-container">
+                                <div class="chart-header">
+                                    <h4 class="chart-title">Recurring Themes</h4>
+                                    <div class="chart-status" id="recurring-themes-status">Loading...</div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="recurring-themes-chart" width="300" height="200"></canvas>
+                                </div>
+                            </div>
+                            
+                            <!-- Emotional Landscape Doughnut Chart -->
+                            <div class="chart-container glass-panel" id="emotional-landscape-container">
+                                <div class="chart-header">
+                                    <h4 class="chart-title">Emotional Landscape</h4>
+                                    <div class="chart-status" id="emotional-landscape-status">Loading...</div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="emotional-landscape-chart" width="300" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- Recent Insights -->
+                    <section class="insights-section">
+                        <h3 class="section-title">Recent Insights</h3>
+                        <div id="insights-container" class="insights-container">
+                            <!-- Insights will be populated by JavaScript -->
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="{{ url_for('static', filename='js/performance-optimizer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/accessibility-enhancer.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/streaming-performance-monitor.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/loading-feedback.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/error-handlers.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/cognitive-charts.js') }}"></script>
+</body>
+</html>

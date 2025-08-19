@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Performance Optimization Test - Synapse</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <style>
+        body {
+            padding: 20px;
+            background: var(--hud-bg-primary);
+            color: var(--hud-text-primary);
+            font-family: var(--font-family-primary);
+        }
+
+        .test-section {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            margin-bottom: var(--spacing-md);
+            backdrop-filter: var(--glass-blur);
+        }
+
+        .test-button {
+            background: var(--hud-accent-cyan);
+            color: var(--hud-bg-primary);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-small);
+            cursor: pointer;
+            margin: var(--spacing-xs);
+            font-weight: 600;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .test-button:hover {
+            box-shadow: var(--glow-medium);
+            transform: translateY(-1px);
+        }
+
+        .test-output {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-small);
+            padding: var(--spacing-sm);
+            margin-top: var(--spacing-sm);
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .streaming-test-area {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-small);
+            padding: var(--spacing-md);
+            margin-top: var(--spacing-sm);
+            min-height: 100px;
+        }
+
+        .chart-test-area {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-sm);
+        }
+
+        .test-chart-container {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-small);
+            padding: var(--spacing-sm);
+            height: 150px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .performance-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: var(--spacing-sm);
+            margin-top: var(--spacing-sm);
+        }
+
+        .stat-box {
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: var(--border-radius-small);
+            padding: var(--spacing-sm);
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--hud-accent-cyan);
+            margin-bottom: var(--spacing-xs);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            color: var(--hud-text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Performance Optimization System Test</h1>
+
+    <!-- Performance Metrics Display -->
+    <div class="test-section">
+        <h2>Performance Metrics</h2>
+        <button class="test-button" onclick="togglePerformanceMetrics()">Toggle Performance Display</button>
+        <button class="test-button" onclick="showPerformanceStats()">Show Current Stats</button>
+
+        <div class="performance-stats" id="performance-stats">
+            <div class="stat-box">
+                <div class="stat-value" id="frame-rate-stat">--</div>
+                <div class="stat-label">Frame Rate</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="memory-usage-stat">--</div>
+                <div class="stat-label">Memory Usage</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="render-queue-stat">--</div>
+                <div class="stat-label">Render Queue</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-value" id="optimizations-stat">--</div>
+                <div class="stat-label">Optimizations</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Frame Throttling Test -->
+    <div class="test-section">
+        <h2>Frame Throttling Test</h2>
+        <button class="test-button" onclick="testFrameThrottling()">Test Frame Throttling</button>
+        <button class="test-button" onclick="testLowPowerMode()">Test Low Power Mode</button>
+
+        <div class="streaming-test-area" id="frame-test-area">
+            <div id="frame-test-output">Click "Test Frame Throttling" to start...</div>
+        </div>
+    </div>
+
+    <!-- Memory Management Test -->
+    <div class="test-section">
+        <h2>Memory Management Test</h2>
+        <button class="test-button" onclick="testMemoryManagement()">Test Memory Cleanup</button>
+        <button class="test-button" onclick="simulateMemoryPressure()">Simulate Memory Pressure</button>
+        <button class="test-button" onclick="testConversationCleanup()">Test Conversation Cleanup</button>
+
+        <div class="test-output" id="memory-test-output"></div>
+    </div>
+
+    <!-- Render Queue Test -->
+    <div class="test-section">
+        <h2>Render Queue Test</h2>
+        <button class="test-button" onclick="testRenderQueue()">Test Render Queue</button>
+        <button class="test-button" onclick="stressTestRenderQueue()">Stress Test Queue</button>
+        <button class="test-button" onclick="testQueueOptimization()">Test Queue Optimization</button>
+
+        <div class="chart-test-area" id="render-test-area">
+            <div class="test-chart-container">Chart 1</div>
+            <div class="test-chart-container">Chart 2</div>
+            <div class="test-chart-container">Chart 3</div>
+            <div class="test-chart-container">Chart 4</div>
+        </div>
+
+        <div class="test-output" id="render-test-output"></div>
+    </div>
+
+    <!-- Streaming Optimization Test -->
+    <div class="test-section">
+        <h2>Streaming Optimization Test</h2>
+        <button class="test-button" onclick="testStreamingOptimization()">Test Streaming Render</button>
+        <button class="test-button" onclick="testTypewriterEffect()">Test Typewriter Effect</button>
+
+        <div class="streaming-test-area" id="streaming-test-area">
+            <div id="streaming-output">Streaming test output will appear here...</div>
+        </div>
+    </div>
+
+    <!-- Integration Test -->
+    <div class="test-section">
+        <h2>Integration Test</h2>
+        <button class="test-button" onclick="runFullIntegrationTest()">Run Full Integration Test</button>
+        <button class="test-button" onclick="resetAllTests()">Reset All Tests</button>
+
+        <div class="test-output" id="integration-test-output"></div>
+    </div>
+
+    <!-- Include the performance optimizer -->
+    <script src="static/js/performance-optimizer.js"></script>
+
+    <script>
+        // Test variables
+        let testPerformanceOptimizer = null;
+        let testConversationHistory = [];
+        let testCharts = {};
+        let testMetricsVisible = false;
+
+        // Initialize test environment
+        document.addEventListener('DOMContentLoaded', function () {
+            // Wait for performance optimizer to initialize
+            setTimeout(() => {
+                testPerformanceOptimizer = window.performanceOptimizer;
+                if (testPerformanceOptimizer) {
+                    log('integration-test-output', 'Performance Optimizer initialized successfully');
+                    updatePerformanceStats();
+
+                    // Set up periodic stats update
+                    setInterval(updatePerformanceStats, 2000);
+                } else {
+                    log('integration-test-output', 'ERROR: Performance Optimizer not found');
+                }
+            }, 500);
+
+            // Create mock conversation history
+            for (let i = 0; i < 50; i++) {
+                testConversationHistory.push({
+                    role: i % 2 === 0 ? 'user' : 'assistant',
+                    content: `Test message ${i + 1}`,
+                    timestamp: new Date(Date.now() - (50 - i) * 60000).toISOString()
+                });
+            }
+            window.conversationHistory = testConversationHistory;
+        });
+
+        // Utility function for logging
+        function log(elementId, message) {
+            const element = document.getElementById(elementId);
+            if (element) {
+                const timestamp = new Date().toLocaleTimeString();
+                element.innerHTML += `[${timestamp}] ${message}<br>`;
+                element.scrollTop = element.scrollHeight;
+            }
+        }
+
+        // Update performance statistics display
+        function updatePerformanceStats() {
+            if (!testPerformanceOptimizer) return;
+
+            const metrics = testPerformanceOptimizer.getPerformanceMetrics();
+
+            document.getElementById('frame-rate-stat').textContent = Math.round(metrics.frameRate) + ' FPS';
+            document.getElementById('memory-usage-stat').textContent = Math.round(metrics.memoryUsage / 1024 / 1024) + ' MB';
+            document.getElementById('render-queue-stat').textContent = metrics.renderQueueSize;
+            document.getElementById('optimizations-stat').textContent = metrics.totalOptimizations;
+        }
+
+        // Toggle performance metrics display
+        function togglePerformanceMetrics() {
+            testMetricsVisible = !testMetricsVisible;
+
+            // Create or remove performance metrics display
+            let metricsDisplay = document.querySelector('.performance-metrics');
+
+            if (testMetricsVisible && !metricsDisplay) {
+                metricsDisplay = document.createElement('div');
+                metricsDisplay.className = 'performance-metrics visible';
+                metricsDisplay.innerHTML = `
+                    <h4>Performance Metrics</h4>
+                    <div class="metric-row">
+                        <span class="metric-label">Frame Rate:</span>
+                        <span class="metric-value" id="debug-frame-rate">-- FPS</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Memory:</span>
+                        <span class="metric-value" id="debug-memory">-- MB</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Queue Size:</span>
+                        <span class="metric-value" id="debug-queue">--</span>
+                    </div>
+                    <div class="metric-row">
+                        <span class="metric-label">Optimizations:</span>
+                        <span class="metric-value" id="debug-optimizations">--</span>
+                    </div>
+                `;
+                document.body.appendChild(metricsDisplay);
+
+                // Update debug metrics periodically
+                setInterval(() => {
+                    if (testPerformanceOptimizer && testMetricsVisible) {
+                        const metrics = testPerformanceOptimizer.getPerformanceMetrics();
+                        document.getElementById('debug-frame-rate').textContent = Math.round(metrics.frameRate) + ' FPS';
+                        document.getElementById('debug-memory').textContent = Math.round(metrics.memoryUsage / 1024 / 1024) + ' MB';
+                        document.getElementById('debug-queue').textContent = metrics.renderQueueSize;
+                        document.getElementById('debug-optimizations').textContent = metrics.totalOptimizations;
+                    }
+                }, 1000);
+
+                log('integration-test-output', 'Performance metrics display enabled');
+            } else if (!testMetricsVisible && metricsDisplay) {
+                metricsDisplay.remove();
+                log('integration-test-output', 'Performance metrics display disabled');
+            }
+        }
+
+        // Show current performance stats
+        function showPerformanceStats() {
+            if (!testPerformanceOptimizer) {
+                log('integration-test-output', 'ERROR: Performance optimizer not available');
+                return;
+            }
+
+            const metrics = testPerformanceOptimizer.getPerformanceMetrics();
+            log('integration-test-output', `Performance Stats: Frame Rate: ${Math.round(metrics.frameRate)} FPS, Memory: ${Math.round(metrics.memoryUsage / 1024 / 1024)} MB, Queue: ${metrics.renderQueueSize}, Optimizations: ${metrics.totalOptimizations}`);
+        }
+
+        // Test frame throttling
+        function testFrameThrottling() {
+            if (!testPerformanceOptimizer) {
+                log('integration-test-output', 'ERROR: Performance optimizer not available');
+                return;
+            }
+
+            const testArea = document.getElementById('frame-test-output');
+            let counter = 0;
+
+            log('integration-test-output', 'Starting frame throttling test...');
+
+            // Test rapid updates with frame throttling
+            const interval = setInterval(() => {
+                counter++;
+
+                // Use performance optimizer for smooth updates
+                testPerformanceOptimizer.optimizeDOMUpdate(() => {
+                    testArea.textContent = `Frame throttling test: Update ${counter}`;
+                });
+
+                if (counter >= 100) {
+                    clearInterval(interval);
+                    log('integration-test-output', 'Frame throttling test completed (100 updates)');
+                }
+            }, 10); // Very fast updates to test throttling
+        }
+
+        // Test low power mode
+        function testLowPowerMode() {
+            if (!testPerformanceOptimizer) {
+                log('integration-test-output', 'ERROR: Performance optimizer not available');
+                return;
+            }
+
+            log('integration-test-output', 'Testing low power mode...');
+
+            // Simulate page becoming hidden
+            testPerformanceOptimizer.pauseNonEssentialOperations();
+
+            setTimeout(() => {
+                // Simulate page becoming visible again
+                testPerformanceOptimizer.resumeOperations();
+                log('integration-test-output', 'Low power mode test completed');
+            }, 3000);
+        }
+
+        // Test memory management
+        function testMemoryManagement() {
+            if (!testPerformanceOptimizer) {
+                log('integration-test-output', 'ERROR: Performance optimizer not available');
+                return;
+            }
+
+            log('memory-test-output', 'Testing memory management...');
+
+            // Register some mock charts
+            for (let i = 0; i < 5; i++) {
+                const mockChart = {
+                    destroy: () => log('memory-test-output', `Mock chart ${i} destroyed`)
+                };
+                testPerformanceOptimizer.registerChart(`test-chart-${i}`, mockChart);
+            }
+
+            log('memory-test-output', 'Registered 5 mock charts');
+
+            // Trigger memory cleanup
+            setTimeout(() => {
+                testPerformanceOptimizer.memoryManager.performCleanup();
+                log('memory-test-output', 'Memory cleanup completed');
+            }, 1000);
+        }
+
+        // Simulate memory pressure
+        function simulateMemoryPressure() {
+            log('memory-test-output', 'Simulating memory pressure...');
+
+            // Create large conversation history
+            const largeHistory = [];
+            for (let i = 0; i < 200; i++) {
+                largeHistory.push({
+                    role: i % 2 === 0 ? 'user' : 'assistant',
+                    content: `Large message ${i + 1} with lots of content to simulate memory usage. `.repeat(10),
+                    timestamp: new Date(Date.now() - (200 - i) * 60000).toISOString()
+                });
+            }
+
+            window.conversationHistory = largeHistory;
+            log('memory-test-output', `Created large conversation history with ${largeHistory.length} messages`);
+
+            // Trigger optimization
+            if (testPerformanceOptimizer) {
+                testPerformanceOptimizer.applyPerformanceOptimizations();
+                log('memory-test-output', 'Applied performance optimizations');
+            }
+        }
+
+        // Test conversation cleanup
+        function testConversationCleanup() {
+            if (!testPerformanceOptimizer) {
+                log('memory-test-output', 'ERROR: Performance optimizer not available');
+                return;
+            }
+
+            const originalLength = window.conversationHistory ? window.conversationHistory.length : 0;
+            log('memory-test-output', `Original conversation length: ${originalLength}`);
+
+            // Force conversation cleanup
+            testPerformanceOptimizer.conversationCleaner.forceCleanup();
+
+            const newLength = window.conversationHistory ? window.conversationHistory.length : 0;
+            log('memory-test-output', `Conversation length after cleanup: ${newLength}`);
+            log('memory-test-output', `Cleaned up ${originalLength - newLength} messages`);
+        }
+
+        // Test render queue
+        function testRenderQueue() {
+            if (!testPerformanceOptimizer) {
+                log('render-test-output', 'ERROR: Performance optimizer not available');
+                return;
+            }
+
+            log('render-test-output', 'Testing render queue...');
+
+            // Add multiple render operations
+            for (let i = 0; i < 10; i++) {
+                testPerformanceOptimizer.renderQueue.add(() => {
+                    log('render-test-output', `Render operation ${i + 1} executed`);
+                }, i % 3); // Different priorities
+            }
+
+            log('render-test-output', 'Added 10 render operations to queue');
+        }
+
+        // Stress test render queue
+        function stressTestRenderQueue() {
+            if (!testPerformanceOptimizer) {
+                log('render-test-output', 'ERROR: Performance optimizer not available');
+                return;
+            }
+
+            log('render-test-output', 'Starting render queue stress test...');
+
+            let operationCount = 0;
+
+            // Add many render operations rapidly
+            for (let i = 0; i < 100; i++) {
+                testPerformanceOptimizer.renderQueue.add(() => {
+                    operationCount++;
+                    if (operationCount % 20 === 0) {
+                        log('render-test-output', `Executed ${operationCount} render operations`);
+                    }
+                });
+            }
+
+            log('render-test-output', 'Added 100 render operations for stress test');
+        }
+
+        // Test queue optimization
+        function testQueueOptimization() {
+            if (!testPerformanceOptimizer) {
+                log('render-test-output', 'ERROR: Performance optimizer not available');
+                return;
+            }
+
+            log('render-test-output', 'Testing queue optimization...');
+
+            // Add old operations (simulate stale operations)
+            for (let i = 0; i < 20; i++) {
+                const operation = {
+                    fn: () => log('render-test-output', `Old operation ${i + 1}`),
+                    priority: 0,
+                    timestamp: Date.now() - 10000 // 10 seconds ago
+                };
+                testPerformanceOptimizer.renderQueue.queue.push(operation);
+            }
+
+            const queueSizeBefore = testPerformanceOptimizer.renderQueue.getQueueSize();
+            log('render-test-output', `Queue size before optimization: ${queueSizeBefore}`);
+
+            // Optimize queue
+            testPerformanceOptimizer.renderQueue.optimize();
+
+            const queueSizeAfter = testPerformanceOptimizer.renderQueue.getQueueSize();
+            log('render-test-output', `Queue size after optimization: ${queueSizeAfter}`);
+            log('render-test-output', `Removed ${queueSizeBefore - queueSizeAfter} stale operations`);
+        }
+
+        // Test streaming optimization
+        function testStreamingOptimization() {
+            if (!testPerformanceOptimizer) {
+                log('integration-test-output', 'ERROR: Performance optimizer not available');
+                return;
+            }
+
+            const streamingOutput = document.getElementById('streaming-output');
+            let content = '';
+
+            log('integration-test-output', 'Testing streaming optimization...');
+
+            // Simulate streaming text updates
+            const words = ['This', 'is', 'a', 'test', 'of', 'the', 'streaming', 'optimization', 'system', 'with', 'smooth', 'text', 'rendering'];
+            let wordIndex = 0;
+
+            const streamInterval = setInterval(() => {
+                if (wordIndex < words.length) {
+                    content += (wordIndex > 0 ? ' ' : '') + words[wordIndex];
+
+                    // Use performance optimizer for smooth streaming
+                    testPerformanceOptimizer.optimizeStreamingRender(streamingOutput, content);
+
+                    wordIndex++;
+                } else {
+                    clearInterval(streamInterval);
+                    log('integration-test-output', 'Streaming optimization test completed');
+                }
+            }, 200);
+        }
+
+        // Test typewriter effect
+        function testTypewriterEffect() {
+            const streamingOutput = document.getElementById('streaming-output');
+            const text = 'This is a typewriter effect test with character-by-character rendering for smooth visual feedback.';
+
+            log('integration-test-output', 'Testing typewriter effect...');
+
+            let charIndex = 0;
+            streamingOutput.textContent = '';
+
+            const typeInterval = setInterval(() => {
+                if (charIndex < text.length) {
+                    if (testPerformanceOptimizer) {
+                        testPerformanceOptimizer.optimizeStreamingRender(streamingOutput, text.substring(0, charIndex + 1));
+                    } else {
+                        streamingOutput.textContent = text.substring(0, charIndex + 1);
+                    }
+                    charIndex++;
+                } else {
+                    clearInterval(typeInterval);
+                    log('integration-test-output', 'Typewriter effect test completed');
+                }
+            }, 50);
+        }
+
+        // Run full integration test
+        function runFullIntegrationTest() {
+            log('integration-test-output', '=== Starting Full Integration Test ===');
+
+            if (!testPerformanceOptimizer) {
+                log('integration-test-output', 'ERROR: Performance optimizer not available');
+                return;
+            }
+
+            let testStep = 0;
+            const tests = [
+                () => {
+                    log('integration-test-output', 'Step 1: Testing frame throttling...');
+                    testFrameThrottling();
+                },
+                () => {
+                    log('integration-test-output', 'Step 2: Testing memory management...');
+                    testMemoryManagement();
+                },
+                () => {
+                    log('integration-test-output', 'Step 3: Testing render queue...');
+                    testRenderQueue();
+                },
+                () => {
+                    log('integration-test-output', 'Step 4: Testing streaming optimization...');
+                    testStreamingOptimization();
+                },
+                () => {
+                    log('integration-test-output', 'Step 5: Testing performance optimization...');
+                    testPerformanceOptimizer.applyPerformanceOptimizations();
+                    log('integration-test-output', 'Applied performance optimizations');
+                },
+                () => {
+                    log('integration-test-output', '=== Integration Test Completed Successfully ===');
+                    showPerformanceStats();
+                }
+            ];
+
+            function runNextTest() {
+                if (testStep < tests.length) {
+                    tests[testStep]();
+                    testStep++;
+                    setTimeout(runNextTest, 2000); // Wait 2 seconds between tests
+                }
+            }
+
+            runNextTest();
+        }
+
+        // Reset all tests
+        function resetAllTests() {
+            // Clear all output areas
+            const outputElements = [
+                'integration-test-output',
+                'memory-test-output',
+                'render-test-output'
+            ];
+
+            outputElements.forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.innerHTML = '';
+                }
+            });
+
+            // Reset streaming output
+            document.getElementById('streaming-output').textContent = 'Streaming test output will appear here...';
+            document.getElementById('frame-test-output').textContent = 'Click "Test Frame Throttling" to start...';
+
+            // Reset conversation history
+            window.conversationHistory = [...testConversationHistory];
+
+            log('integration-test-output', 'All tests reset');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotional Landscape Chart Test - Synapse AI</title>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Enhanced HUD Theme CSS -->
+    <style>
+        :root {
+            /* Core HUD Colors */
+            --hud-bg-primary: #0D1117;
+            --hud-text-primary: #C9D1D9;
+            --hud-accent-cyan: #58A6FF;
+            --hud-accent-glow: rgba(88, 166, 255, 0.3);
+            
+            /* Glassmorphism Properties */
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --glass-blur: blur(10px);
+            
+            /* Glow Effects */
+            --glow-small: 0 0 10px var(--hud-accent-glow);
+            --glow-medium: 0 0 20px var(--hud-accent-glow);
+            --glow-large: 0 0 30px var(--hud-accent-glow);
+            
+            /* Layout Properties */
+            --border-radius: 12px;
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: var(--hud-bg-primary);
+            color: var(--hud-text-primary);
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
+            min-height: 100vh;
+            padding: 20px;
+            background: linear-gradient(135deg, 
+                var(--hud-bg-primary) 0%, 
+                #161B22 50%, 
+                var(--hud-bg-primary) 100%);
+        }
+
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .test-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .test-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--hud-accent-cyan);
+            text-shadow: var(--glow-small);
+            margin-bottom: 10px;
+        }
+
+        .test-subtitle {
+            font-size: 1.2rem;
+            color: var(--hud-text-primary);
+            opacity: 0.8;
+        }
+
+        .chart-test-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--hud-accent-cyan);
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .chart-container {
+            background: var(--glass-bg);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            box-shadow: var(--glow-small);
+            padding: 30px;
+            margin-bottom: 30px;
+            transition: all var(--transition-speed) ease;
+        }
+
+        .chart-container:hover {
+            box-shadow: var(--glow-medium);
+            transform: translateY(-2px);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--hud-text-primary);
+        }
+
+        .chart-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .chart-status.loading {
+            background: rgba(88, 166, 255, 0.2);
+            color: var(--hud-accent-cyan);
+            border: 1px solid var(--hud-accent-cyan);
+        }
+
+        .chart-status.success {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10B981;
+            border: 1px solid #10B981;
+        }
+
+        .chart-status.error {
+            background: rgba(239, 68, 68, 0.2);
+            color: #EF4444;
+            border: 1px solid #EF4444;
+        }
+
+        .chart-status.placeholder {
+            background: rgba(245, 158, 11, 0.2);
+            color: #F59E0B;
+            border: 1px solid #F59E0B;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 400px;
+            width: 100%;
+            min-width: 600px; /* Ensure minimum width for side text */
+        }
+
+        .test-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .test-button {
+            background: var(--glass-bg);
+            border: 1px solid var(--hud-accent-cyan);
+            color: var(--hud-text-primary);
+            padding: 12px 24px;
+            border-radius: var(--border-radius);
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all var(--transition-speed) ease;
+            box-shadow: var(--glow-small);
+        }
+
+        .test-button:hover {
+            background: rgba(88, 166, 255, 0.1);
+            box-shadow: var(--glow-medium);
+            transform: translateY(-1px);
+        }
+
+        .test-button:active {
+            transform: scale(0.98);
+        }
+
+        .test-info {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .test-info h3 {
+            color: var(--hud-accent-cyan);
+            margin-bottom: 10px;
+        }
+
+        .test-info ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .test-info li {
+            padding: 5px 0;
+            border-left: 3px solid var(--hud-accent-cyan);
+            padding-left: 15px;
+            margin-bottom: 8px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            max-width: 800px; /* Increased width for side text */
+            margin: 0 auto;
+        }
+
+        @media (max-width: 768px) {
+            .test-title {
+                font-size: 2rem;
+            }
+            
+            .chart-wrapper {
+                height: 300px;
+            }
+            
+            .test-controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="test-header">
+            <h1 class="test-title">EMOTIONAL LANDSCAPE CHART</h1>
+            <p class="test-subtitle">Testing Enhanced Doughnut Chart with Center Text & Interactive Features</p>
+        </div>
+
+        <div class="test-info">
+            <h3>Test Features</h3>
+            <ul>
+                <li>✓ Doughnut chart displaying emotional distribution from conversation analysis</li>
+                <li>✓ Process emotional data from memory insights into chart-ready format</li>
+                <li>✓ Apply HUD color scheme with multiple accent colors for different emotions</li>
+                <li>✓ Add center text display showing dominant emotion and interactive legend</li>
+                <li>✓ Enhanced tooltips with emotion descriptions and rankings</li>
+                <li>✓ Smooth animations and hover effects</li>
+                <li>✓ Interactive legend with percentage display</li>
+            </ul>
+        </div>
+
+        <div class="test-controls">
+            <button class="test-button" onclick="testWithSampleData()">Test with Sample Data</button>
+            <button class="test-button" onclick="testWithRealData()">Test with Processed Data</button>
+            <button class="test-button" onclick="testWithMinimalData()">Test with Minimal Data</button>
+            <button class="test-button" onclick="testErrorHandling()">Test Error Handling</button>
+            <button class="test-button" onclick="refreshChart()">Refresh Chart</button>
+        </div>
+
+        <div class="chart-test-section">
+            <h2 class="section-title">Emotional Landscape Visualization</h2>
+            <div class="charts-grid">
+                <div class="chart-container" id="emotional-landscape-container">
+                    <div class="chart-header">
+                        <h4 class="chart-title">Emotional Landscape</h4>
+                        <div class="chart-status" id="emotional-landscape-status">Loading...</div>
+                    </div>
+                    <div class="chart-wrapper">
+                        <canvas id="emotional-landscape-chart" width="400" height="400"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include the cognitive charts manager -->
+    <script src="static/js/cognitive-charts.js"></script>
+
+    <script>
+        let chartManager;
+
+        // Initialize chart manager when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Initializing Emotional Landscape Chart Test');
+            
+            const dashboardElement = document.querySelector('.charts-grid');
+            chartManager = new CognitiveChartManager(dashboardElement);
+            
+            // Test with sample data initially
+            testWithSampleData();
+        });
+
+        function testWithSampleData() {
+            console.log('Testing with sample emotional data');
+            updateStatus('Loading sample data...', 'loading');
+            
+            const sampleData = {
+                labels: ['Curious', 'Analytical', 'Optimistic', 'Thoughtful', 'Creative', 'Empathetic'],
+                values: [28, 22, 18, 15, 12, 5]
+            };
+            
+            setTimeout(() => {
+                chartManager.createEmotionalLandscapeChart(sampleData);
+            }, 500);
+        }
+
+        function testWithRealData() {
+            console.log('Testing with processed emotional data');
+            updateStatus('Processing insights...', 'loading');
+            
+            // Simulate processed data from memory insights
+            const processedData = {
+                labels: ['Curious', 'Analytical', 'Confident', 'Playful', 'Focused', 'Calm'],
+                values: [32, 24, 18, 12, 10, 4]
+            };
+            
+            setTimeout(() => {
+                chartManager.createEmotionalLandscapeChart(processedData);
+            }, 800);
+        }
+
+        function testWithMinimalData() {
+            console.log('Testing with minimal emotional data');
+            updateStatus('Loading minimal data...', 'loading');
+            
+            const minimalData = {
+                labels: ['Curious', 'Thoughtful'],
+                values: [70, 30]
+            };
+            
+            setTimeout(() => {
+                chartManager.createEmotionalLandscapeChart(minimalData);
+            }, 500);
+        }
+
+        function testErrorHandling() {
+            console.log('Testing error handling');
+            updateStatus('Testing error scenarios...', 'loading');
+            
+            // Test with invalid data
+            setTimeout(() => {
+                try {
+                    chartManager.createEmotionalLandscapeChart({
+                        labels: [],
+                        values: []
+                    });
+                } catch (error) {
+                    console.error('Error handling test:', error);
+                    updateStatus('Error handled gracefully', 'error');
+                }
+            }, 500);
+        }
+
+        function refreshChart() {
+            console.log('Refreshing emotional landscape chart');
+            updateStatus('Refreshing...', 'loading');
+            
+            // Clean up and recreate with enhanced data
+            if (chartManager.charts.emotionalLandscape) {
+                chartManager.charts.emotionalLandscape.destroy();
+            }
+            
+            const enhancedData = {
+                labels: ['Curious', 'Analytical', 'Optimistic', 'Creative', 'Empathetic', 'Confident', 'Playful'],
+                values: [25, 20, 18, 15, 12, 8, 2]
+            };
+            
+            setTimeout(() => {
+                chartManager.createEmotionalLandscapeChart(enhancedData);
+            }, 500);
+        }
+
+        function updateStatus(message, type) {
+            const statusElement = document.getElementById('emotional-landscape-status');
+            if (statusElement) {
+                statusElement.textContent = message;
+                statusElement.className = `chart-status ${type}`;
+            }
+        }
+
+        // Test chart interactivity
+        function testChartInteractivity() {
+            console.log('Testing chart interactivity features');
+            
+            const chart = chartManager.charts.emotionalLandscape;
+            if (chart) {
+                // Simulate hover events
+                console.log('Chart hover and click interactions available');
+                console.log('Legend click functionality enabled');
+                console.log('Center text updates dynamically');
+            }
+        }
+
+        // Run interactivity test after initial load
+        setTimeout(testChartInteractivity, 2000);
+    </script>
+</body>
+</html>

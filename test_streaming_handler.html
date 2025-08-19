@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming Handler Test</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <style>
+        body {
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-container {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-lg);
+            margin: var(--spacing-md) 0;
+        }
+        .test-button {
+            background: var(--hud-accent-cyan);
+            color: var(--hud-bg-primary);
+            border: none;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-small);
+            cursor: pointer;
+            margin: var(--spacing-sm);
+            font-family: var(--font-family-primary);
+        }
+        .test-button:hover {
+            background: var(--hud-accent-cyan-hover);
+        }
+        #chat-log {
+            min-height: 300px;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: var(--spacing-md);
+            margin: var(--spacing-md) 0;
+            background: rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="hud-container">
+        <h1 class="hud-title">Streaming Response Handler Test</h1>
+        
+        <div class="test-container">
+            <h2>Test Controls</h2>
+            <button class="test-button" onclick="testStreamingSuccess()">Test Successful Streaming</button>
+            <button class="test-button" onclick="testStreamingTimeout()">Test Timeout Error</button>
+            <button class="test-button" onclick="testStreamingNetwork()">Test Network Error</button>
+            <button class="test-button" onclick="testTypewriterEffect()">Test Typewriter Effect</button>
+            <button class="test-button" onclick="clearTestLog()">Clear Log</button>
+        </div>
+        
+        <div id="chat-log" class="chat-log">
+            <!-- Test messages will appear here -->
+        </div>
+        
+        <div class="test-container">
+            <h3>Configuration</h3>
+            <label>
+                <input type="checkbox" id="enable-typewriter" checked> Enable Typewriter Effect
+            </label>
+            <br>
+            <label>
+                <input type="checkbox" id="enable-cursor" checked> Enable Cursor Animation
+            </label>
+            <br>
+            <label>
+                Typewriter Speed: <input type="range" id="typewriter-speed" min="10" max="100" value="30">
+                <span id="speed-value">30ms</span>
+            </label>
+        </div>
+    </div>
+
+    <script>
+        // Mock conversation history for testing
+        let conversationHistory = [
+            { role: 'user', content: 'Hello, can you help me test streaming?' }
+        ];
+        
+        // Mock performance config
+        const PERFORMANCE_CONFIG = {
+            RESPONSE_TIMEOUT_MS: 30000
+        };
+        
+        // Mock functions
+        function scrollToBottom() {
+            const chatLog = document.getElementById('chat-log');
+            chatLog.scrollTop = chatLog.scrollHeight;
+        }
+        
+        function updatePerformanceMetrics(responseTime) {
+            console.log(`Performance: ${responseTime}ms`);
+        }
+        
+        function saveConversationToStorage() {
+            console.log('Conversation saved');
+        }
+        
+        function showPerformanceNotification(responseTime) {
+            console.log(`Slow response notification: ${responseTime}ms`);
+        }
+        
+        function handleRegularResponse(responseElement, requestStartTime) {
+            return new Promise((resolve) => {
+                const contentElement = responseElement.querySelector('.message-content');
+                contentElement.innerHTML = '<div class="message-text-content">Fallback response: This is a regular (non-streaming) response.</div>';
+                responseElement.classList.remove('streaming', 'streaming-error');
+                responseElement.classList.add('fallback-mode');
+                
+                setTimeout(() => {
+                    const responseTime = Date.now() - requestStartTime;
+                    updatePerformanceMetrics(responseTime);
+                    resolve();
+                }, 1000);
+            });
+        }
+        
+        // Include the StreamingResponseHandler class from chat.js
+        // (This would normally be loaded from the actual chat.js file)
+    </script>
+    
+    <!-- Load the actual chat.js file to get the StreamingResponseHandler -->
+    <script src="static/js/chat.js"></script>
+    
+    <script>
+        // Test functions
+        function createTestMessage() {
+            const messageElement = document.createElement('div');
+            messageElement.classList.add('message', 'ai-message', 'streaming');
+            
+            const contentElement = document.createElement('div');
+            contentElement.classList.add('message-content');
+            messageElement.appendChild(contentElement);
+            
+            const loadingElement = document.createElement('div');
+            loadingElement.classList.add('streaming-indicator');
+            loadingElement.innerHTML = `
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+                <span class="streaming-text">Testing streaming...</span>
+            `;
+            contentElement.appendChild(loadingElement);
+            
+            document.getElementById('chat-log').appendChild(messageElement);
+            scrollToBottom();
+            
+            return messageElement;
+        }
+        
+        function testStreamingSuccess() {
+            const messageElement = createTestMessage();
+            const requestStartTime = Date.now();
+            
+            // Mock successful streaming response
+            setTimeout(() => {
+                const handler = new StreamingResponseHandler({ scrollToBottom });
+                
+                // Configure based on UI settings
+                updateHandlerConfig(handler);
+                
+                // Simulate streaming response
+                simulateStreamingResponse(handler, messageElement, requestStartTime, false);
+            }, 500);
+        }
+        
+        function testStreamingTimeout() {
+            const messageElement = createTestMessage();
+            const requestStartTime = Date.now();
+            
+            setTimeout(() => {
+                const handler = new StreamingResponseHandler({ scrollToBottom });
+                updateHandlerConfig(handler);
+                
+                // Simulate timeout error
+                const timeoutError = new Error('Request timeout');
+                timeoutError.name = 'AbortError';
+                handler.handleStreamingError(timeoutError, messageElement, requestStartTime);
+            }, 1000);
+        }
+        
+        function testStreamingNetwork() {
+            const messageElement = createTestMessage();
+            const requestStartTime = Date.now();
+            
+            setTimeout(() => {
+                const handler = new StreamingResponseHandler({ scrollToBottom });
+                updateHandlerConfig(handler);
+                
+                // Simulate network error
+                const networkError = new Error('Failed to fetch');
+                networkError.name = 'TypeError';
+                handler.handleStreamingError(networkError, messageElement, requestStartTime);
+            }, 1000);
+        }
+        
+        function testTypewriterEffect() {
+            const messageElement = createTestMessage();
+            const requestStartTime = Date.now();
+            
+            setTimeout(() => {
+                const handler = new StreamingResponseHandler({ scrollToBottom });
+                updateHandlerConfig(handler);
+                
+                // Simulate typewriter effect with sample text
+                simulateStreamingResponse(handler, messageElement, requestStartTime, true);
+            }, 500);
+        }
+        
+        function simulateStreamingResponse(handler, messageElement, requestStartTime, longText = false) {
+            const contentElement = messageElement.querySelector('.message-content');
+            const loadingElement = messageElement.querySelector('.streaming-indicator');
+            
+            if (loadingElement) {
+                loadingElement.remove();
+            }
+            
+            const textElement = handler.createStreamingTextElement(contentElement);
+            
+            const sampleText = longText 
+                ? "This is a longer test message to demonstrate the typewriter effect. Notice how each character appears one by one, creating a realistic typing animation. The cursor blinks at the end to show that streaming is in progress. This helps create the illusion of real-time AI response generation."
+                : "This is a test streaming response with typewriter effect!";
+            
+            let currentText = '';
+            let charIndex = 0;
+            
+            const typeInterval = setInterval(async () => {
+                if (charIndex < sampleText.length) {
+                    const char = sampleText[charIndex];
+                    currentText += char;
+                    
+                    await handler.appendContentWithTypewriter(textElement, char, currentText.slice(0, -1));
+                    charIndex++;
+                } else {
+                    clearInterval(typeInterval);
+                    
+                    // Finalize the response
+                    handler.finalizeStreamingResponse(
+                        messageElement,
+                        textElement,
+                        currentText,
+                        requestStartTime,
+                        {
+                            totalChunks: charIndex,
+                            totalCharacters: currentText.length,
+                            wordsPerSecond: 15
+                        }
+                    );
+                }
+            }, handler.typewriterSpeed);
+        }
+        
+        function updateHandlerConfig(handler) {
+            const enableTypewriter = document.getElementById('enable-typewriter').checked;
+            const enableCursor = document.getElementById('enable-cursor').checked;
+            const speed = parseInt(document.getElementById('typewriter-speed').value);
+            
+            handler.configureTypewriter({
+                enabled: enableTypewriter,
+                cursor: enableCursor,
+                speed: speed
+            });
+        }
+        
+        function clearTestLog() {
+            document.getElementById('chat-log').innerHTML = '';
+        }
+        
+        // Update speed display
+        document.getElementById('typewriter-speed').addEventListener('input', function() {
+            document.getElementById('speed-value').textContent = this.value + 'ms';
+        });
+        
+        console.log('Streaming Handler Test Page Loaded');
+        console.log('Available test functions: testStreamingSuccess(), testStreamingTimeout(), testStreamingNetwork(), testTypewriterEffect()');
+    </script>
+</body>
+</html>

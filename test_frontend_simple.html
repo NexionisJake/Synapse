@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend Tests - Simple Version</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-result { padding: 10px; margin: 5px 0; border-radius: 4px; }
+        .test-pass { background-color: #d4edda; color: #155724; }
+        .test-fail { background-color: #f8d7da; color: #721c24; }
+        button { background-color: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin: 5px; }
+        .mock-elements { display: none; }
+    </style>
+</head>
+<body>
+    <h1>Synapse AI - Frontend Tests (Simple)</h1>
+    
+    <button onclick="runTests()">Run Tests</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <div id="test-output"></div>
+    <div id="test-summary"></div>
+    
+    <!-- Mock DOM elements -->
+    <div class="mock-elements">
+        <div id="chat-log"></div>
+        <input type="text" id="message-input" />
+        <button id="send-button">Send</button>
+        <div id="loading-state"></div>
+        <div id="dashboard-content"></div>
+    </div>
+
+    <script>
+        let testResults = [];
+        
+        function assert(condition, message) {
+            if (!condition) throw new Error(message || 'Assertion failed');
+        }
+        
+        function assertEqual(actual, expected, message) {
+            if (actual !== expected) throw new Error(message || `Expected ${expected}, got ${actual}`);
+        }
+        
+        function runTest(name, testFn) {
+            try {
+                testFn();
+                testResults.push({ name, passed: true, error: null });
+                console.log(`✓ ${name}`);
+            } catch (error) {
+                testResults.push({ name, passed: false, error: error.message });
+                console.log(`✗ ${name}: ${error.message}`);
+            }
+        }
+        
+        function runTests() {
+            testResults = [];
+            document.getElementById('test-output').innerHTML = '';
+            document.getElementById('test-summary').innerHTML = '';
+            
+            // Test 1: DOM Elements Exist
+            runTest('DOM Elements Exist', () => {
+                const messageInput = document.getElementById('message-input');
+                const sendButton = document.getElementById('send-button');
+                const chatLog = document.getElementById('chat-log');
+                
+                assert(messageInput !== null, 'Message input should exist');
+                assert(sendButton !== null, 'Send button should exist');
+                assert(chatLog !== null, 'Chat log should exist');
+            });
+            
+            // Test 2: Input Validation
+            runTest('Input Validation', () => {
+                const messageInput = document.getElementById('message-input');
+                
+                messageInput.value = '';
+                assert(messageInput.value.trim() === '', 'Empty message should be detected');
+                
+                messageInput.value = 'Hello world';
+                assert(messageInput.value.trim() !== '', 'Non-empty message should be valid');
+            });
+            
+            // Test 3: HTML Escaping
+            runTest('HTML Escaping', () => {
+                function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+                
+                const dangerousText = '<script>alert("test")</script>';
+                const escaped = escapeHtml(dangerousText);
+                
+                assert(!escaped.includes('<script>'), 'Script tags should be escaped');
+                assert(escaped.includes('&lt;script&gt;'), 'Should contain escaped HTML');
+            });
+            
+            // Test 4: Date Formatting
+            runTest('Date Formatting', () => {
+                function formatDate(date) {
+                    return date.toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                }
+                
+                const testDate = new Date('2024-01-01T12:00:00Z');
+                const formatted = formatDate(testDate);
+                
+                assert(formatted.includes('2024'), 'Formatted date should contain year');
+                assert(formatted.includes('Jan'), 'Formatted date should contain month');
+            });
+            
+            // Display results
+            displayResults();
+        }
+        
+        function displayResults() {
+            const output = document.getElementById('test-output');
+            const summary = document.getElementById('test-summary');
+            
+            const total = testResults.length;
+            const passed = testResults.filter(r => r.passed).length;
+            const failed = total - passed;
+            
+            // Display individual results
+            output.innerHTML = testResults.map(result => `
+                <div class="test-result ${result.passed ? 'test-pass' : 'test-fail'}">
+                    <strong>${result.passed ? '✓' : '✗'} ${result.name}</strong>
+                    ${result.error ? `<br><small>Error: ${result.error}</small>` : ''}
+                </div>
+            `).join('');
+            
+            // Display summary
+            summary.innerHTML = `
+                <div class="test-result ${failed === 0 ? 'test-pass' : 'test-fail'}">
+                    <strong>Test Summary: ${passed}/${total} passed (${failed} failed)</strong>
+                    ${failed === 0 ? ' 🎉 All tests passed!' : ' ❌ Some tests failed'}
+                </div>
+            `;
+        }
+        
+        function clearResults() {
+            document.getElementById('test-output').innerHTML = '';
+            document.getElementById('test-summary').innerHTML = '';
+            testResults = [];
+        }
+        
+        // Auto-run tests on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('Simple frontend test framework loaded. Click "Run Tests" to start.');
+        });
+    </script>
+</body>
+</html>
