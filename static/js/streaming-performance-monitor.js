@@ -122,7 +122,7 @@ class StreamingPerformanceMonitor {
                 break;
             default: // medium
                 performance.adjustedTimeouts = {
-                    timeoutThreshold: 90000, // 1.5 minutes
+                    timeoutThreshold: 180000, // 3 minutes
                     slowResponseTime: 5000, // 5 seconds
                     verySlowResponseTime: 12000, // 12 seconds
                     minWordsPerSecond: 8,

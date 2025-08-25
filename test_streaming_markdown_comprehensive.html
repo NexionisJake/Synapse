@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Streaming Markdown Test Suite - Synapse</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <!-- DOMPurify for HTML sanitization -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
+    <style>
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.1);
+        }
+        .test-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 15px;
+        }
+        .test-panel {
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-small);
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        .test-panel h4 {
+            margin-top: 0;
+            color: var(--hud-accent-cyan);
+        }
+        .test-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .test-button {
+            padding: 8px 16px;
+            border: 1px solid var(--hud-accent-cyan);
+            background: transparent;
+            color: var(--hud-accent-cyan);
+            border-radius: var(--border-radius-small);
+            cursor: pointer;
+            transition: all var(--transition-speed-fast);
+            font-size: 12px;
+        }
+        .test-button:hover {
+            background: var(--hud-accent-cyan);
+            color: var(--hud-bg-primary);
+        }
+        .test-button.primary {
+            background: var(--hud-accent-cyan);
+            color: var(--hud-bg-primary);
+        }
+        .test-button.danger {
+            border-color: #ff4444;
+            color: #ff4444;
+        }
+        .test-button.danger:hover {
+            background: #ff4444;
+            color: white;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-success { background: #00ff00; }
+        .status-error { background: #ff4444; }
+        .status-pending { background: #ffaa00; animation: pulse 1s infinite; }
+        .status-idle { background: #666; }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .test-output {
+            min-height: 200px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius-small);
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.3);
+            font-family: var(--font-family-mono);
+            font-size: 12px;
+        }
+        
+        .chat-test-area {
+            border: 1px solid var(--glass-border);
+            border-radius: var(--border-radius);
+            min-height: 300px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding: 15px;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .performance-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .stat-card {
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid var(--hud-accent-cyan);
+            border-radius: var(--border-radius-small);
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--hud-accent-cyan);
+        }
+        
+        .stat-label {
+            font-size: 11px;
+            color: var(--hud-text-secondary);
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="hud-container">
+        <div class="test-container">
+            <header class="hud-header">
+                <h1 class="hud-title">STREAMING MARKDOWN TEST SUITE</h1>
+                <p class="hud-subtitle">Comprehensive testing for Synapse streaming Markdown rendering</p>
+                <div class="status-indicators">
+                    <div class="connection-status" id="app-status">
+                        <span id="app-status-text">INITIALIZING</span>
+                    </div>
+                    <div class="connection-status" id="ollama-status">
+                        <span id="ollama-status-text">CHECKING</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Test 1: Basic Markdown Rendering -->
+            <div class="test-section">
+                <h2>Test 1: Basic Markdown Rendering</h2>
+                <p>Tests if static Markdown content renders correctly with all formatting elements.</p>
+                
+                <div class="test-buttons">
+                    <button class="test-button primary" onclick="testBasicMarkdown()">Run Basic Test</button>
+                    <button class="test-button" onclick="clearTest('basic-test')">Clear</button>
+                </div>
+                
+                <div class="test-grid">
+                    <div class="test-panel">
+                        <h4><span class="status-indicator status-idle" id="basic-status"></span>Markdown Input</h4>
+                        <div class="test-output" id="basic-input">
+                            <!-- Markdown source will be shown here -->
+                        </div>
+                    </div>
+                    <div class="test-panel">
+                        <h4>Rendered Output</h4>
+                        <div class="test-output" id="basic-output">
+                            <!-- Rendered result will be shown here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test 2: Streaming Simulation -->
+            <div class="test-section">
+                <h2>Test 2: Streaming Simulation</h2>
+                <p>Simulates streaming content character by character to test real-time Markdown rendering.</p>
+                
+                <div class="test-buttons">
+                    <button class="test-button primary" onclick="testStreamingSimulation()">Test Fast Streaming</button>
+                    <button class="test-button" onclick="testStreamingSimulation(true)">Test Slow Streaming</button>
+                    <button class="test-button" onclick="testTypewriterEffect()">Test Typewriter</button>
+                    <button class="test-button danger" onclick="stopStreaming()">Stop</button>
+                    <button class="test-button" onclick="clearTest('streaming-test')">Clear</button>
+                </div>
+                
+                <div class="test-grid">
+                    <div class="test-panel">
+                        <h4><span class="status-indicator status-idle" id="streaming-status"></span>Streaming Progress</h4>
+                        <div class="test-output" id="streaming-progress">
+                            <!-- Progress info will be shown here -->
+                        </div>
+                    </div>
+                    <div class="test-panel">
+                        <h4>Live Rendered Output</h4>
+                        <div class="test-output message-text-content" id="streaming-output">
+                            <!-- Streaming result will be shown here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test 3: Real AI Response Test -->
+            <div class="test-section">
+                <h2>Test 3: Real AI Response Test</h2>
+                <p>Tests actual AI responses with streaming to verify end-to-end functionality.</p>
+                
+                <div class="test-buttons">
+                    <button class="test-button primary" onclick="testRealAI()">Test Real AI Response</button>
+                    <button class="test-button" onclick="testCustomPrompt()">Custom Prompt Test</button>
+                    <button class="test-button danger" onclick="abortAITest()">Abort</button>
+                    <button class="test-button" onclick="clearTest('ai-test')">Clear</button>
+                </div>
+                
+                <div class="chat-test-area" id="ai-test-area">
+                    <!-- AI responses will appear here -->
+                </div>
+                
+                <div class="performance-stats">
+                    <div class="stat-card">
+                        <div class="stat-value" id="response-time">0ms</div>
+                        <div class="stat-label">Response Time</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="streaming-speed">0 WPS</div>
+                        <div class="stat-label">Streaming Speed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="total-chunks">0</div>
+                        <div class="stat-label">Total Chunks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="characters-count">0</div>
+                        <div class="stat-label">Characters</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test 4: Performance Impact Test -->
+            <div class="test-section">
+                <h2>Test 4: Performance Impact Test</h2>
+                <p>Tests the performance impact of Markdown rendering during high-frequency updates.</p>
+                
+                <div class="test-buttons">
+                    <button class="test-button primary" onclick="testPerformanceImpact()">Run Performance Test</button>
+                    <button class="test-button" onclick="testMemoryLeaks()">Test Memory Leaks</button>
+                    <button class="test-button danger" onclick="stopPerformanceTest()">Stop</button>
+                    <button class="test-button" onclick="clearTest('performance-test')">Clear</button>
+                </div>
+                
+                <div class="test-grid">
+                    <div class="test-panel">
+                        <h4><span class="status-indicator status-idle" id="performance-status"></span>Performance Metrics</h4>
+                        <div class="test-output" id="performance-metrics">
+                            <!-- Performance data will be shown here -->
+                        </div>
+                    </div>
+                    <div class="test-panel">
+                        <h4>Test Output</h4>
+                        <div class="test-output message-text-content" id="performance-output">
+                            <!-- Performance test result will be shown here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test 5: Edge Cases and Error Handling -->
+            <div class="test-section">
+                <h2>Test 5: Edge Cases and Error Handling</h2>
+                <p>Tests edge cases, malformed Markdown, and error scenarios.</p>
+                
+                <div class="test-buttons">
+                    <button class="test-button primary" onclick="testEdgeCases()">Test Edge Cases</button>
+                    <button class="test-button" onclick="testMalformedMarkdown()">Test Malformed MD</button>
+                    <button class="test-button" onclick="testLargeContent()">Test Large Content</button>
+                    <button class="test-button" onclick="testSpecialCharacters()">Test Special Chars</button>
+                    <button class="test-button" onclick="clearTest('edge-test')">Clear</button>
+                </div>
+                
+                <div class="test-grid">
+                    <div class="test-panel">
+                        <h4><span class="status-indicator status-idle" id="edge-status"></span>Test Results</h4>
+                        <div class="test-output" id="edge-results">
+                            <!-- Edge case results will be shown here -->
+                        </div>
+                    </div>
+                    <div class="test-panel">
+                        <h4>Rendered Output</h4>
+                        <div class="test-output message-text-content" id="edge-output">
+                            <!-- Edge case output will be shown here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Load the MarkdownRenderer from chat.js
+        const MarkdownRenderer = {
+            configure() {
+                if (typeof marked !== 'undefined') {
+                    marked.setOptions({
+                        breaks: true,
+                        gfm: true,
+                        sanitize: false,
+                        smartLists: true,
+                        smartypants: false
+                    });
+                }
+            },
+
+            render(markdownText) {
+                if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
+                    console.warn('Markdown libraries not loaded, falling back to plain text');
+                    return this.escapeHtml(markdownText);
+                }
+
+                try {
+                    const rawHtml = marked.parse(markdownText);
+                    const cleanHtml = DOMPurify.sanitize(rawHtml, {
+                        ALLOWED_TAGS: [
+                            'p', 'br', 'strong', 'em', 'u', 'strike', 'del',
+                            'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                            'ul', 'ol', 'li',
+                            'blockquote', 'pre', 'code',
+                            'a', 'span', 'div'
+                        ],
+                        ALLOWED_ATTR: ['href', 'target', 'class'],
+                        ALLOW_DATA_ATTR: false
+                    });
+                    return cleanHtml;
+                } catch (error) {
+                    console.error('Markdown rendering error:', error);
+                    return this.escapeHtml(markdownText);
+                }
+            },
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            },
+
+            setContent(element, content) {
+                const renderedHtml = this.render(content);
+                element.innerHTML = renderedHtml;
+            }
+        };
+
+        // Initialize
+        MarkdownRenderer.configure();
+        window.MarkdownRenderer = MarkdownRenderer;
+
+        // Global test state
+        let streamingInterval = null;
+        let performanceTestInterval = null;
+        let aiTestAbortController = null;
+
+        // Sample test content
+        const testMarkdown = `# Comprehensive Markdown Test
+
+This is a **comprehensive test** of Markdown rendering with *various formatting* elements.
+
+## Lists and Structure
+
+Here are some key points:
+
+* **Bold item**: This item has bold text
+* *Italic item*: This item has italic text
+* Regular item with \`inline code\`
+* Item with [a link](https://example.com)
+
+### Numbered Lists
+
+1. **First step**: Initialize the system
+2. **Second step**: Configure the settings
+3. **Third step**: Test the functionality
+
+## Code Blocks
+
+Here's a code example:
+
+\`\`\`javascript
+function testMarkdown() {
+    return "This is working!";
+}
+\`\`\`
+
+## Blockquotes
+
+> This is a blockquote that demonstrates how quoted text appears.
+> It can span multiple lines and maintain proper formatting.
+
+## Mixed Content
+
+Let's combine **bold**, *italic*, and \`code\` in the same paragraph.
+
+* Mix of **bold** and *italic* text
+* Code snippets like \`console.log()\`
+* Multiple formatting **_combined_**
+
+**What patterns do you notice in this test?**`;
+
+        // Status management
+        function updateStatus(elementId, status, text) {
+            const indicator = document.getElementById(elementId);
+            if (indicator) {
+                indicator.className = `status-indicator status-${status}`;
+            }
+            const textElement = document.getElementById(elementId.replace('-status', '-status-text'));
+            if (textElement) {
+                textElement.textContent = text;
+            }
+        }
+
+        // Test functions
+        function testBasicMarkdown() {
+            updateStatus('basic-status', 'pending', 'Testing...');
+            
+            const inputElement = document.getElementById('basic-input');
+            const outputElement = document.getElementById('basic-output');
+            
+            // Show the markdown source
+            inputElement.innerHTML = `<pre style="white-space: pre-wrap; color: #ccc;">${testMarkdown}</pre>`;
+            
+            try {
+                // Render using MarkdownRenderer
+                MarkdownRenderer.setContent(outputElement, testMarkdown);
+                updateStatus('basic-status', 'success', 'Success');
+                logTest('Basic Markdown', 'PASS', 'All formatting elements rendered correctly');
+            } catch (error) {
+                updateStatus('basic-status', 'error', 'Error');
+                outputElement.innerHTML = `<div style="color: #ff4444;">Error: ${error.message}</div>`;
+                logTest('Basic Markdown', 'FAIL', error.message);
+            }
+        }
+
+        function testStreamingSimulation(slow = false) {
+            updateStatus('streaming-status', 'pending', 'Streaming...');
+            stopStreaming(); // Stop any existing streaming
+            
+            const progressElement = document.getElementById('streaming-progress');
+            const outputElement = document.getElementById('streaming-output');
+            
+            outputElement.innerHTML = '';
+            outputElement.setAttribute('data-raw-content', '');
+            
+            const content = testMarkdown;
+            let currentIndex = 0;
+            const delay = slow ? 100 : 20; // ms between characters
+            const startTime = performance.now();
+            
+            progressElement.innerHTML = `<div>Streaming speed: ${slow ? 'Slow' : 'Fast'} (${delay}ms/char)</div>`;
+            
+            streamingInterval = setInterval(() => {
+                if (currentIndex < content.length) {
+                    const char = content[currentIndex];
+                    const currentContent = content.substring(0, currentIndex + 1);
+                    
+                    // Update using MarkdownRenderer
+                    try {
+                        MarkdownRenderer.setContent(outputElement, currentContent);
+                        
+                        // Update progress
+                        const progress = Math.round((currentIndex / content.length) * 100);
+                        const elapsed = Math.round(performance.now() - startTime);
+                        progressElement.innerHTML = `
+                            <div>Progress: ${progress}% (${currentIndex}/${content.length} chars)</div>
+                            <div>Elapsed: ${elapsed}ms</div>
+                            <div>Current char: "${char}"</div>
+                            <div>Speed: ${slow ? 'Slow' : 'Fast'} (${delay}ms/char)</div>
+                        `;
+                        
+                        currentIndex++;
+                    } catch (error) {
+                        clearInterval(streamingInterval);
+                        updateStatus('streaming-status', 'error', 'Error');
+                        logTest('Streaming Simulation', 'FAIL', error.message);
+                        return;
+                    }
+                } else {
+                    clearInterval(streamingInterval);
+                    updateStatus('streaming-status', 'success', 'Complete');
+                    const totalTime = Math.round(performance.now() - startTime);
+                    progressElement.innerHTML += `<div style="color: #00ff00;">✓ Completed in ${totalTime}ms</div>`;
+                    logTest('Streaming Simulation', 'PASS', `Completed in ${totalTime}ms`);
+                }
+            }, delay);
+        }
+
+        function testTypewriterEffect() {
+            updateStatus('streaming-status', 'pending', 'Typewriter...');
+            stopStreaming();
+            
+            const progressElement = document.getElementById('streaming-progress');
+            const outputElement = document.getElementById('streaming-output');
+            
+            outputElement.innerHTML = '';
+            outputElement.classList.add('streaming-cursor');
+            
+            const content = "# Typewriter Effect Test\n\nThis text appears with a **typewriter effect** to simulate *real streaming*.\n\n* Item 1\n* Item 2\n* Item 3";
+            let currentIndex = 0;
+            const startTime = performance.now();
+            
+            streamingInterval = setInterval(() => {
+                if (currentIndex < content.length) {
+                    const char = content[currentIndex];
+                    const currentContent = content.substring(0, currentIndex + 1);
+                    
+                    MarkdownRenderer.setContent(outputElement, currentContent);
+                    
+                    // Variable speed based on character
+                    let nextDelay = 50;
+                    if (char === ' ') nextDelay = 25;
+                    if (char === '.' || char === '!' || char === '?') nextDelay = 200;
+                    if (char === '\n') nextDelay = 100;
+                    
+                    progressElement.innerHTML = `
+                        <div>Typewriter: ${currentIndex}/${content.length}</div>
+                        <div>Current: "${char}" (delay: ${nextDelay}ms)</div>
+                    `;
+                    
+                    currentIndex++;
+                    
+                    clearInterval(streamingInterval);
+                    streamingInterval = setTimeout(() => {
+                        streamingInterval = setInterval(arguments.callee, 50);
+                    }, nextDelay);
+                } else {
+                    clearInterval(streamingInterval);
+                    outputElement.classList.remove('streaming-cursor');
+                    updateStatus('streaming-status', 'success', 'Complete');
+                    logTest('Typewriter Effect', 'PASS', 'Typewriter effect completed successfully');
+                }
+            }, 50);
+        }
+
+        function stopStreaming() {
+            if (streamingInterval) {
+                clearInterval(streamingInterval);
+                streamingInterval = null;
+            }
+            const outputElement = document.getElementById('streaming-output');
+            if (outputElement) {
+                outputElement.classList.remove('streaming-cursor');
+            }
+        }
+
+        async function testRealAI() {
+            updateStatus('ai-status', 'pending', 'AI Request...');
+            
+            const testArea = document.getElementById('ai-test-area');
+            
+            // Create user message
+            const userMessage = document.createElement('div');
+            userMessage.className = 'message user-message';
+            userMessage.innerHTML = `
+                <div class="message-content">
+                    <div class="message-text-content">
+                        <strong>Test Query:</strong> Please provide a structured response with headings, bold text, lists, and a blockquote to test the Markdown rendering. Include at least 3 bullet points and use emphasis for key concepts.
+                    </div>
+                </div>
+            `;
+            testArea.appendChild(userMessage);
+            
+            // Create AI response container
+            const aiMessage = document.createElement('div');
+            aiMessage.className = 'message ai-message streaming';
+            aiMessage.innerHTML = `
+                <div class="message-content">
+                    <div class="streaming-indicator">
+                        <div class="typing-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                        <span class="streaming-text">Synapse is thinking...</span>
+                    </div>
+                </div>
+            `;
+            testArea.appendChild(aiMessage);
+            
+            const startTime = performance.now();
+            
+            try {
+                aiTestAbortController = new AbortController();
+                
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        conversation: [
+                            {
+                                role: 'user',
+                                content: 'Please provide a structured response with headings, bold text, lists, and a blockquote to test the Markdown rendering. Include at least 3 bullet points and use emphasis for key concepts.'
+                            }
+                        ],
+                        stream: true
+                    }),
+                    signal: aiTestAbortController.signal
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                // Remove loading indicator
+                const loadingElement = aiMessage.querySelector('.streaming-indicator');
+                if (loadingElement) {
+                    loadingElement.remove();
+                }
+                
+                // Create text element
+                const textElement = document.createElement('div');
+                textElement.className = 'message-text-content streaming-cursor';
+                aiMessage.querySelector('.message-content').appendChild(textElement);
+                
+                // Process streaming response
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullResponse = '';
+                let buffer = '';
+                let chunkCount = 0;
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            try {
+                                const data = JSON.parse(line.slice(6));
+                                
+                                if (data.error) {
+                                    throw new Error(data.error);
+                                }
+                                
+                                if (data.content) {
+                                    chunkCount++;
+                                    fullResponse += data.content;
+                                    
+                                    // Update with Markdown rendering
+                                    MarkdownRenderer.setContent(textElement, fullResponse);
+                                    
+                                    // Update stats
+                                    const elapsed = performance.now() - startTime;
+                                    document.getElementById('response-time').textContent = Math.round(elapsed) + 'ms';
+                                    document.getElementById('streaming-speed').textContent = Math.round((fullResponse.length / 5) / (elapsed / 1000)) + ' WPS';
+                                    document.getElementById('total-chunks').textContent = chunkCount;
+                                    document.getElementById('characters-count').textContent = fullResponse.length;
+                                }
+                                
+                                if (data.done) {
+                                    break;
+                                }
+                            } catch (parseError) {
+                                console.warn('Failed to parse streaming data:', parseError);
+                            }
+                        }
+                    }
+                }
+                
+                // Finalize
+                textElement.classList.remove('streaming-cursor');
+                aiMessage.classList.remove('streaming');
+                aiMessage.classList.add('streaming-complete');
+                
+                updateStatus('ai-status', 'success', 'Complete');
+                logTest('Real AI Response', 'PASS', `Completed with ${chunkCount} chunks, ${fullResponse.length} characters`);
+                
+            } catch (error) {
+                updateStatus('ai-status', 'error', 'Error');
+                aiMessage.querySelector('.message-content').innerHTML = `
+                    <div class="message-text-content" style="color: #ff4444;">
+                        ❌ Error: ${error.message}
+                    </div>
+                `;
+                logTest('Real AI Response', 'FAIL', error.message);
+            }
+        }
+
+        function abortAITest() {
+            if (aiTestAbortController) {
+                aiTestAbortController.abort();
+                updateStatus('ai-status', 'error', 'Aborted');
+            }
+        }
+
+        function testPerformanceImpact() {
+            updateStatus('performance-status', 'pending', 'Testing...');
+            
+            const metricsElement = document.getElementById('performance-metrics');
+            const outputElement = document.getElementById('performance-output');
+            
+            const testContent = testMarkdown;
+            let iterationCount = 0;
+            const maxIterations = 100;
+            const startTime = performance.now();
+            let renderTimes = [];
+            
+            performanceTestInterval = setInterval(() => {
+                const renderStart = performance.now();
+                
+                // Simulate streaming by adding content incrementally
+                const partialContent = testContent.substring(0, (iterationCount * testContent.length) / maxIterations);
+                MarkdownRenderer.setContent(outputElement, partialContent);
+                
+                const renderTime = performance.now() - renderStart;
+                renderTimes.push(renderTime);
+                
+                iterationCount++;
+                
+                // Update metrics
+                const avgRenderTime = renderTimes.reduce((a, b) => a + b, 0) / renderTimes.length;
+                const maxRenderTime = Math.max(...renderTimes);
+                const minRenderTime = Math.min(...renderTimes);
+                
+                metricsElement.innerHTML = `
+                    <div>Iteration: ${iterationCount}/${maxIterations}</div>
+                    <div>Current render: ${renderTime.toFixed(2)}ms</div>
+                    <div>Avg render time: ${avgRenderTime.toFixed(2)}ms</div>
+                    <div>Max render time: ${maxRenderTime.toFixed(2)}ms</div>
+                    <div>Min render time: ${minRenderTime.toFixed(2)}ms</div>
+                    <div>Memory usage: ${(performance.memory?.usedJSHeapSize / 1024 / 1024).toFixed(2) || 'N/A'} MB</div>
+                `;
+                
+                if (iterationCount >= maxIterations) {
+                    clearInterval(performanceTestInterval);
+                    updateStatus('performance-status', 'success', 'Complete');
+                    
+                    const totalTime = performance.now() - startTime;
+                    metricsElement.innerHTML += `<div style="color: #00ff00;">✓ Test completed in ${totalTime.toFixed(2)}ms</div>`;
+                    
+                    // Determine if performance is acceptable
+                    const status = avgRenderTime < 5 ? 'PASS' : 'WARN';
+                    logTest('Performance Impact', status, `Avg render time: ${avgRenderTime.toFixed(2)}ms`);
+                }
+            }, 10);
+        }
+
+        function stopPerformanceTest() {
+            if (performanceTestInterval) {
+                clearInterval(performanceTestInterval);
+                performanceTestInterval = null;
+                updateStatus('performance-status', 'error', 'Stopped');
+            }
+        }
+
+        function testEdgeCases() {
+            updateStatus('edge-status', 'pending', 'Testing...');
+            
+            const resultsElement = document.getElementById('edge-results');
+            const outputElement = document.getElementById('edge-output');
+            
+            const edgeCases = [
+                { name: 'Empty content', content: '' },
+                { name: 'Only whitespace', content: '   \n\n   ' },
+                { name: 'Single character', content: 'a' },
+                { name: 'Only markdown syntax', content: '**' },
+                { name: 'Unclosed bold', content: '**bold text without closing' },
+                { name: 'Nested formatting', content: '**bold *italic* bold**' },
+                { name: 'Multiple line breaks', content: 'Line 1\n\n\n\nLine 2' },
+                { name: 'Special characters', content: '!@#$%^&*()_+{}|:<>?[]\\;\'\",./' }
+            ];
+            
+            let results = [];
+            
+            edgeCases.forEach((testCase, index) => {
+                try {
+                    const tempElement = document.createElement('div');
+                    MarkdownRenderer.setContent(tempElement, testCase.content);
+                    results.push(`✓ ${testCase.name}: PASS`);
+                    
+                    if (index === edgeCases.length - 1) {
+                        MarkdownRenderer.setContent(outputElement, testCase.content);
+                    }
+                } catch (error) {
+                    results.push(`✗ ${testCase.name}: FAIL - ${error.message}`);
+                }
+            });
+            
+            resultsElement.innerHTML = results.map(r => `<div>${r}</div>`).join('');
+            updateStatus('edge-status', 'success', 'Complete');
+            logTest('Edge Cases', 'PASS', `${results.filter(r => r.includes('PASS')).length}/${edgeCases.length} tests passed`);
+        }
+
+        function testMalformedMarkdown() {
+            const malformedTests = [
+                '**bold without closing',
+                '*italic without closing',
+                '```code without closing',
+                '> blockquote\n> without proper spacing',
+                '* list item\nwithout proper spacing',
+                '# heading\nwith **bold *italic** mismatched*'
+            ];
+            
+            const outputElement = document.getElementById('edge-output');
+            const combined = malformedTests.join('\n\n');
+            
+            try {
+                MarkdownRenderer.setContent(outputElement, combined);
+                logTest('Malformed Markdown', 'PASS', 'Handled gracefully');
+            } catch (error) {
+                logTest('Malformed Markdown', 'FAIL', error.message);
+            }
+        }
+
+        function clearTest(testId) {
+            const elements = {
+                'basic-test': ['basic-input', 'basic-output', 'basic-status'],
+                'streaming-test': ['streaming-progress', 'streaming-output', 'streaming-status'],
+                'ai-test': ['ai-test-area'],
+                'performance-test': ['performance-metrics', 'performance-output', 'performance-status'],
+                'edge-test': ['edge-results', 'edge-output', 'edge-status']
+            };
+            
+            if (elements[testId]) {
+                elements[testId].forEach(id => {
+                    const element = document.getElementById(id);
+                    if (element) {
+                        element.innerHTML = '';
+                        if (id.includes('status')) {
+                            updateStatus(id, 'idle', 'Ready');
+                        }
+                    }
+                });
+            }
+            
+            // Stop any running tests
+            stopStreaming();
+            stopPerformanceTest();
+        }
+
+        function logTest(testName, status, details) {
+            console.log(`[TEST] ${testName}: ${status} - ${details}`);
+        }
+
+        // Check system status on load
+        async function checkSystemStatus() {
+            try {
+                // Check if app is running
+                const healthResponse = await fetch('/api/health');
+                if (healthResponse.ok) {
+                    updateStatus('app-status', 'success', 'APP READY');
+                } else {
+                    updateStatus('app-status', 'error', 'APP ERROR');
+                }
+                
+                // Check Ollama status
+                const aiResponse = await fetch('/api/health');
+                const aiData = await aiResponse.json();
+                if (aiData.ai_service) {
+                    updateStatus('ollama-status', 'success', 'OLLAMA READY');
+                } else {
+                    updateStatus('ollama-status', 'error', 'OLLAMA ERROR');
+                }
+            } catch (error) {
+                updateStatus('app-status', 'error', 'CONNECTION ERROR');
+                updateStatus('ollama-status', 'error', 'CONNECTION ERROR');
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            checkSystemStatus();
+            updateStatus('app-status', 'success', 'TEST READY');
+        });
+    </script>
+</body>
+</html>

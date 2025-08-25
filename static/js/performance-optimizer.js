@@ -38,7 +38,12 @@ class PerformanceOptimizer {
     optimizeStreamingRender(textElement, content) {
         this.frameThrottler.throttle(() => {
             if (textElement && textElement.isConnected) {
-                textElement.textContent = content;
+                // Use Markdown renderer if available, fall back to textContent
+                if (window.MarkdownRenderer && typeof window.MarkdownRenderer.setContent === 'function') {
+                    window.MarkdownRenderer.setContent(textElement, content);
+                } else {
+                    textElement.textContent = content;
+                }
             }
         });
     }

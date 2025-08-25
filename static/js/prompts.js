@@ -361,8 +361,8 @@ function displayPromptHistory(history) {
             </div>
             <div class="prompt-preview">${escapeHtml(prompt.prompt.substring(0, 200))}${prompt.prompt.length > 200 ? '...' : ''}</div>
             <div class="prompt-actions">
-                <button class="btn btn-secondary" onclick="viewPrompt(${index})">View Full</button>
-                <button class="btn btn-primary" onclick="restorePrompt(${index})">Restore</button>
+                <button class="hud-button secondary" onclick="viewPrompt(${index})">View Full</button>
+                <button class="hud-button primary" onclick="restorePrompt(${index})">Restore</button>
                 <button class="btn btn-warning" onclick="editPrompt(${index})">Edit</button>
             </div>
         </div>
@@ -385,7 +385,8 @@ function viewPrompt(index) {
         left: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0,0,0,0.5);
+        background: rgba(0, 0, 0, 0.8);
+        backdrop-filter: blur(8px);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -393,13 +394,13 @@ function viewPrompt(index) {
     `;
     
     modal.innerHTML = `
-        <div style="background: white; padding: 30px; border-radius: 8px; max-width: 80%; max-height: 80%; overflow-y: auto;">
-            <h3>${escapeHtml(prompt.name)}</h3>
-            <p style="color: #666; margin-bottom: 20px;">Created: ${formatDate(prompt.created_at)}</p>
-            <div style="background: #f8f9fa; padding: 15px; border-radius: 6px; white-space: pre-wrap; line-height: 1.6; margin-bottom: 20px;">
+        <div class="glass-panel-strong" style="padding: 30px; border-radius: var(--border-radius); max-width: 80%; max-height: 80%; overflow-y: auto;">
+            <h3 class="hud-text-primary">${escapeHtml(prompt.name)}</h3>
+            <p class="hud-text-secondary" style="margin-bottom: 20px;">Created: ${formatDate(prompt.created_at)}</p>
+            <div class="hud-card" style="white-space: pre-wrap; line-height: 1.6; margin-bottom: 20px;">
                 ${escapeHtml(prompt.prompt)}
             </div>
-            <button class="btn btn-secondary" onclick="this.parentElement.parentElement.remove()">Close</button>
+            <button class="hud-button secondary" onclick="this.parentElement.parentElement.remove()">Close</button>
         </div>
     `;
     
@@ -466,13 +467,13 @@ function editPrompt(index) {
         nameInput.value = prompt.name;
     }
     
-    // Switch to editor tab
     showTab('editor');
     
     // Update tab button states
     const tabs = document.querySelectorAll('.prompt-tab');
     tabs.forEach(tab => tab.classList.remove('active'));
     tabs[1].classList.add('active'); // Editor tab is second
+    showTab('editor', editorTabButton);
 }
 
 /**

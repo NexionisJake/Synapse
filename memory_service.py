@@ -8,6 +8,7 @@ It extracts insights from conversations and maintains long-term memory storage.
 import json
 import os
 import logging
+import threading
 import shutil
 from typing import List, Dict, Any, Optional
 from datetime import datetime
@@ -40,6 +41,7 @@ class MemoryService:
         self.model = model
         self.memory_file = memory_file
         self.insight_prompt = self._get_insight_extraction_prompt()
+        self._file_lock = threading.Lock()
     
     def _get_insight_extraction_prompt(self) -> str:
         """Get the specialized prompt for insight extraction"""
@@ -219,7 +221,7 @@ Remember: Respond with ONLY the JSON object, no other text."""
     @handle_service_error(ErrorCategory.MEMORY_SERVICE, ErrorSeverity.MEDIUM)
     def save_insights(self, insights_data: Dict[str, Any]) -> None:
         """
-        Save insights to the memory file with enhanced error handling
+        Save insights to the memory file with enhanced error handling and file locking
         
         Args:
             insights_data: Structured insights data to save
@@ -227,75 +229,76 @@ Remember: Respond with ONLY the JSON object, no other text."""
         Raises:
             MemoryServiceError: If there's an error saving insights
         """
-        try:
-            # Validate input data
-            if not isinstance(insights_data, dict):
-                raise MemoryServiceError("Insights data must be a dictionary")
-            
-            new_insights = insights_data.get('insights', [])
-            if not isinstance(new_insights, list):
-                raise MemoryServiceError("Insights must be a list")
-            
-            # Load existing memory data if file exists
-            existing_data = self._load_memory_file()
-            
-            # Add new insights to existing data
-            if 'insights' not in existing_data:
-                existing_data['insights'] = []
-            
-            # Validate and add the new insights
-            for i, insight in enumerate(new_insights):
-                if not isinstance(insight, dict):
-                    logger.warning(f"Skipping invalid insight at index {i}: not a dictionary")
-                    continue
+        with self._file_lock:
+            try:
+                # Validate input data
+                if not isinstance(insights_data, dict):
+                    raise MemoryServiceError("Insights data must be a dictionary")
                 
-                # Add validation timestamp if not present
-                if 'timestamp' not in insight:
-                    insight['timestamp'] = datetime.now().isoformat()
+                new_insights = insights_data.get('insights', [])
+                if not isinstance(new_insights, list):
+                    raise MemoryServiceError("Insights must be a list")
                 
-                existing_data['insights'].append(insight)
-            
-            # Update metadata
-            existing_data['metadata'] = {
-                'total_insights': len(existing_data['insights']),
-                'last_updated': datetime.now().isoformat(),
-                'version': '1.0'
-            }
-            
-            # Add conversation summaries if they don't exist
-            if 'conversation_summaries' not in existing_data:
-                existing_data['conversation_summaries'] = []
-            
-            # Add this conversation's summary
-            if 'conversation_summary' in insights_data:
-                summary_entry = {
-                    'timestamp': datetime.now().isoformat(),
-                    'summary': insights_data['conversation_summary'],
-                    'key_themes': insights_data.get('key_themes', []),
-                    'insights_count': len([i for i in new_insights if isinstance(i, dict)])
+                # Load existing memory data if file exists
+                existing_data = self._load_memory_file()
+                
+                # Add new insights to existing data
+                if 'insights' not in existing_data:
+                    existing_data['insights'] = []
+                
+                # Validate and add the new insights
+                for i, insight in enumerate(new_insights):
+                    if not isinstance(insight, dict):
+                        logger.warning(f"Skipping invalid insight at index {i}: not a dictionary")
+                        continue
+                    
+                    # Add validation timestamp if not present
+                    if 'timestamp' not in insight:
+                        insight['timestamp'] = datetime.now().isoformat()
+                    
+                    existing_data['insights'].append(insight)
+                
+                # Update metadata
+                existing_data['metadata'] = {
+                    'total_insights': len(existing_data['insights']),
+                    'last_updated': datetime.now().isoformat(),
+                    'version': '1.0'
                 }
-                existing_data['conversation_summaries'].append(summary_entry)
-            
-            # Save the updated data
-            self._save_memory_file(existing_data)
-            
-            valid_insights_count = len([i for i in new_insights if isinstance(i, dict)])
-            logger.info(f"Successfully saved {valid_insights_count} insights to {self.memory_file}")
-            
-        except Exception as e:
-            error_handler = get_error_handler()
-            error_handler.log_error(
-                e,
-                ErrorCategory.MEMORY_SERVICE,
-                ErrorSeverity.HIGH,
-                {
-                    "insights_count": len(insights_data.get('insights', [])) if isinstance(insights_data, dict) else 0,
-                    "memory_file": self.memory_file
-                }
-            )
-            # Sanitize error message for security
-            sanitized_message = sanitize_error_for_user(e, "Memory save error")
-            raise MemoryServiceError(sanitized_message)
+                
+                # Add conversation summaries if they don't exist
+                if 'conversation_summaries' not in existing_data:
+                    existing_data['conversation_summaries'] = []
+                
+                # Add this conversation's summary
+                if 'conversation_summary' in insights_data:
+                    summary_entry = {
+                        'timestamp': datetime.now().isoformat(),
+                        'summary': insights_data['conversation_summary'],
+                        'key_themes': insights_data.get('key_themes', []),
+                        'insights_count': len([i for i in new_insights if isinstance(i, dict)])
+                    }
+                    existing_data['conversation_summaries'].append(summary_entry)
+                
+                # Save the updated data
+                self._save_memory_file(existing_data)
+                
+                valid_insights_count = len([i for i in new_insights if isinstance(i, dict)])
+                logger.info(f"Successfully saved {valid_insights_count} insights to {self.memory_file}")
+                
+            except Exception as e:
+                error_handler = get_error_handler()
+                error_handler.log_error(
+                    e,
+                    ErrorCategory.MEMORY_SERVICE,
+                    ErrorSeverity.HIGH,
+                    {
+                        "insights_count": len(insights_data.get('insights', [])) if isinstance(insights_data, dict) else 0,
+                        "memory_file": self.memory_file
+                    }
+                )
+                # Sanitize error message for security
+                sanitized_message = sanitize_error_for_user(e, "Memory save error")
+                raise MemoryServiceError(sanitized_message)
     
     def _load_memory_file(self) -> Dict[str, Any]:
         """
@@ -477,46 +480,47 @@ Remember: Respond with ONLY the JSON object, no other text."""
     
     def get_memory_stats(self) -> Dict[str, Any]:
         """
-        Get statistics about the current memory storage
+        Get statistics about the current memory storage (thread-safe)
         
         Returns:
             dict: Memory statistics
         """
-        try:
-            data = self._load_memory_file()
-            
-            insights = data.get('insights', [])
-            summaries = data.get('conversation_summaries', [])
-            
-            # Calculate category distribution
-            categories = {}
-            for insight in insights:
-                category = insight.get('category', 'unknown')
-                categories[category] = categories.get(category, 0) + 1
-            
-            # Calculate confidence distribution
-            confidence_levels = {'high': 0, 'medium': 0, 'low': 0}
-            for insight in insights:
-                confidence = insight.get('confidence', 0)
-                if confidence >= 0.8:
-                    confidence_levels['high'] += 1
-                elif confidence >= 0.5:
-                    confidence_levels['medium'] += 1
-                else:
-                    confidence_levels['low'] += 1
-            
-            return {
-                'total_insights': len(insights),
-                'total_conversations': len(summaries),
-                'categories': categories,
-                'confidence_distribution': confidence_levels,
-                'last_updated': data.get('metadata', {}).get('last_updated'),
-                'memory_file_exists': os.path.exists(self.memory_file),
-                'memory_file_size': os.path.getsize(self.memory_file) if os.path.exists(self.memory_file) else 0
-            }
-            
-        except Exception as e:
-            logger.error(f"Error getting memory stats: {e}")
+        with self._file_lock:
+            try:
+                data = self._load_memory_file()
+                
+                insights = data.get('insights', [])
+                summaries = data.get('conversation_summaries', [])
+                
+                # Calculate category distribution
+                categories = {}
+                for insight in insights:
+                    category = insight.get('category', 'unknown')
+                    categories[category] = categories.get(category, 0) + 1
+                
+                # Calculate confidence distribution
+                confidence_levels = {'high': 0, 'medium': 0, 'low': 0}
+                for insight in insights:
+                    confidence = insight.get('confidence', 0)
+                    if confidence >= 0.8:
+                        confidence_levels['high'] += 1
+                    elif confidence >= 0.5:
+                        confidence_levels['medium'] += 1
+                    else:
+                        confidence_levels['low'] += 1
+                
+                return {
+                    'total_insights': len(insights),
+                    'total_conversations': len(summaries),
+                    'categories': categories,
+                    'confidence_distribution': confidence_levels,
+                    'last_updated': data.get('metadata', {}).get('last_updated'),
+                    'memory_file_exists': os.path.exists(self.memory_file),
+                    'memory_file_size': os.path.getsize(self.memory_file) if os.path.exists(self.memory_file) else 0
+                }
+                
+            except Exception as e:
+                logger.error(f"Error getting memory stats: {e}")
             return {
                 'error': str(e),
                 'total_insights': 0,

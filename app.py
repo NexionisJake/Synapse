@@ -788,7 +788,7 @@ def memory_stats():
         logger.error(f"Error retrieving memory statistics: {e}")
         return jsonify({
             "error": "Failed to retrieve memory statistics",
-            "message": str(e)
+            "message": "An internal error occurred while retrieving memory statistics."
         }), 500
 
 @app.route('/api/health')
@@ -820,7 +820,7 @@ def health_check():
         logger.error(f"Health check failed: {e}")
         return jsonify({
             'status': 'error',
-            'error': str(e)
+            'error': 'An internal error occurred while performing health check.'
         }), 500
 
 @app.route('/api/insights')
@@ -859,7 +859,7 @@ def get_insights():
         logger.error(f"Error retrieving insights for dashboard: {e}")
         return jsonify({
             "error": "Failed to retrieve insights",
-            "message": str(e)
+            "message": "An internal error occurred while retrieving dashboard insights."
         }), 500
 
 @app.route('/api/serendipity', methods=['GET', 'HEAD', 'POST'])
@@ -955,7 +955,7 @@ def get_current_prompt():
         logger.error(f"Error retrieving current prompt: {e}")
         return jsonify({
             "error": "Failed to retrieve current prompt",
-            "message": str(e)
+            "message": "An internal error occurred while retrieving the current prompt."
         }), 500
 
 @app.route('/api/prompt/update', methods=['POST'])
@@ -1060,7 +1060,7 @@ def validate_prompt():
         logger.error(f"Error validating prompt: {e}")
         return jsonify({
             "valid": False,
-            "error": f"Validation failed: {str(e)}"
+            "error": "Validation failed due to an internal error."
         }), 500
 
 @app.route('/api/prompt/test', methods=['POST'])
@@ -1140,7 +1140,7 @@ def get_prompt_history():
         logger.error(f"Error retrieving prompt history: {e}")
         return jsonify({
             "error": "Failed to retrieve prompt history",
-            "message": str(e)
+            "message": "An internal error occurred while retrieving prompt history."
         }), 500
 
 @app.route('/api/prompt/restore', methods=['POST'])

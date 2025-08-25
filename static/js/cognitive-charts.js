@@ -101,7 +101,6 @@ class CognitiveChartManager {
         // Clean up any existing charts first
         this.cleanupAllCharts();
         
-        this.createChartContainers();
         this.isInitialized = true;
         console.log('CognitiveChartManager initialized');
     }
@@ -139,62 +138,6 @@ class CognitiveChartManager {
                 }
             }
         });
-    }
-    
-    /**
-     * Create chart container elements in the dashboard
-     */
-    createChartContainers() {
-        const chartsSection = document.querySelector('.charts-section');
-        if (!chartsSection) {
-            console.warn('Charts section not found in dashboard');
-            return;
-        }
-        
-        // Replace placeholder with actual chart containers
-        const chartPlaceholder = chartsSection.querySelector('.chart-placeholder');
-        if (chartPlaceholder) {
-            chartPlaceholder.remove();
-        }
-        
-        const chartContainersHTML = `
-            <div class="charts-grid">
-                <!-- Core Values Radar Chart -->
-                <div class="chart-container glass-panel" id="core-values-container">
-                    <div class="chart-header">
-                        <h4 class="chart-title">Core Values</h4>
-                        <div class="chart-status" id="core-values-status">Loading...</div>
-                    </div>
-                    <div class="chart-wrapper">
-                        <canvas id="core-values-chart" width="300" height="200"></canvas>
-                    </div>
-                </div>
-                
-                <!-- Recurring Themes Bar Chart -->
-                <div class="chart-container glass-panel" id="recurring-themes-container">
-                    <div class="chart-header">
-                        <h4 class="chart-title">Recurring Themes</h4>
-                        <div class="chart-status" id="recurring-themes-status">Loading...</div>
-                    </div>
-                    <div class="chart-wrapper">
-                        <canvas id="recurring-themes-chart" width="300" height="200"></canvas>
-                    </div>
-                </div>
-                
-                <!-- Emotional Landscape Doughnut Chart -->
-                <div class="chart-container glass-panel" id="emotional-landscape-container">
-                    <div class="chart-header">
-                        <h4 class="chart-title">Emotional Landscape</h4>
-                        <div class="chart-status" id="emotional-landscape-status">Loading...</div>
-                    </div>
-                    <div class="chart-wrapper">
-                        <canvas id="emotional-landscape-chart" width="300" height="200"></canvas>
-                    </div>
-                </div>
-            </div>
-        `;
-        
-        chartsSection.insertAdjacentHTML('beforeend', chartContainersHTML);
     }
     
     /**
@@ -760,23 +703,41 @@ class CognitiveChartManager {
             existingChart.destroy();
         }
         
+        // Create "Power Core" radial gradient for enhanced depth
+        const canvas = ctx.canvas || ctx;
+        const chartCtx = canvas.getContext('2d');
+        const centerX = canvas.width / 2;
+        const centerY = canvas.height / 2;
+        const radius = Math.min(centerX, centerY) * 0.8;
+        
+        const coreGradient = chartCtx.createRadialGradient(centerX, centerY, 0, centerX, centerY, radius);
+        coreGradient.addColorStop(0, 'rgba(0, 229, 255, 0.4)'); // Bright center
+        coreGradient.addColorStop(0.3, 'rgba(88, 166, 255, 0.3)'); // Mid transition
+        coreGradient.addColorStop(0.7, 'rgba(0, 229, 255, 0.15)'); // Outer glow
+        coreGradient.addColorStop(1, 'rgba(0, 229, 255, 0.05)'); // Transparent edge
+        
         const chartData = {
             labels: data.labels || ['Creativity', 'Stability', 'Learning', 'Curiosity', 'Analysis', 'Empathy'],
             datasets: [{
                 label: 'Core Values',
                 data: data.values || [3, 4, 5, 4, 3, 4],
-                backgroundColor: 'rgba(88, 166, 255, 0.15)',
-                borderColor: '#58A6FF',
+                backgroundColor: coreGradient,
+                borderColor: '#00E5FF',
                 borderWidth: 3,
-                pointBackgroundColor: '#58A6FF',
+                pointBackgroundColor: '#00E5FF',
                 pointBorderColor: '#FFFFFF',
                 pointBorderWidth: 3,
                 pointRadius: 8,
                 pointHoverBackgroundColor: '#FFFFFF',
-                pointHoverBorderColor: '#58A6FF',
-                pointHoverBorderWidth: 4,
-                pointHoverRadius: 12,
-                tension: 0.1
+                pointHoverBorderColor: '#00E5FF',
+                pointHoverBorderWidth: 5,
+                pointHoverRadius: 16,
+                tension: 0.2,
+                // Enhanced styling for glow effect
+                shadowColor: '#00E5FF',
+                shadowBlur: 25,
+                shadowOffsetX: 0,
+                shadowOffsetY: 0
             }]
         };
         
@@ -795,27 +756,27 @@ class CognitiveChartManager {
                 scales: {
                     r: {
                         angleLines: { 
-                            color: 'rgba(88, 166, 255, 0.3)',
-                            lineWidth: 1
+                            color: 'rgba(0, 229, 255, 0.2)',
+                            lineWidth: 0.8
                         },
                         grid: { 
-                            color: 'rgba(88, 166, 255, 0.2)',
-                            lineWidth: 1
+                            color: 'rgba(0, 229, 255, 0.15)',
+                            lineWidth: 0.8
                         },
                         pointLabels: { 
                             color: '#C9D1D9',
                             font: {
-                                family: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
+                                family: 'Roboto Mono, SF Mono, Monaco, monospace',
                                 size: 12,
                                 weight: '600'
                             },
-                            padding: 8
+                            padding: 12
                         },
                         ticks: { 
-                            color: 'rgba(201, 209, 217, 0.6)',
+                            color: 'rgba(201, 209, 217, 0.5)',
                             backdropColor: 'transparent',
                             font: {
-                                family: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
+                                family: 'Roboto Mono, SF Mono, Monaco, monospace',
                                 size: 10
                             },
                             stepSize: 1,
@@ -966,17 +927,33 @@ class CognitiveChartManager {
         const frequencies = data.frequencies || [8, 6, 7, 5];
         const totalFrequency = frequencies.reduce((sum, freq) => sum + freq, 0);
         
-        // Create gradient colors for bars based on frequency
+        // Create gradient bars with enhanced depth effect
         const gradientColors = frequencies.map((freq, index) => {
+            const canvas = ctx.canvas || ctx;
+            const chartCtx = canvas.getContext('2d');
+            const gradient = chartCtx.createLinearGradient(0, 0, 300, 0);
             const intensity = freq / Math.max(...frequencies);
-            const alpha = 0.6 + (intensity * 0.4); // Range from 0.6 to 1.0
-            return `rgba(88, 166, 255, ${alpha})`;
+            const baseAlpha = 0.7 + (intensity * 0.3);
+            
+            gradient.addColorStop(0, `rgba(0, 229, 255, ${baseAlpha})`); // Bright cyan start
+            gradient.addColorStop(0.5, `rgba(88, 166, 255, ${baseAlpha})`); // Mid cyan
+            gradient.addColorStop(1, `rgba(58, 133, 210, ${baseAlpha * 0.8})`); // Darker cyan end
+            
+            return gradient;
         });
         
         const hoverColors = frequencies.map((freq, index) => {
+            const canvas = ctx.canvas || ctx;
+            const chartCtx = canvas.getContext('2d');
+            const gradient = chartCtx.createLinearGradient(0, 0, 300, 0);
             const intensity = freq / Math.max(...frequencies);
-            const alpha = 0.8 + (intensity * 0.2); // Range from 0.8 to 1.0
-            return `rgba(88, 166, 255, ${alpha})`;
+            const baseAlpha = 0.9 + (intensity * 0.1);
+            
+            gradient.addColorStop(0, `rgba(0, 229, 255, ${baseAlpha})`);
+            gradient.addColorStop(0.5, `rgba(88, 166, 255, ${baseAlpha})`);
+            gradient.addColorStop(1, `rgba(58, 133, 210, ${baseAlpha})`);
+            
+            return gradient;
         });
         
         try {
@@ -988,18 +965,23 @@ class CognitiveChartManager {
                         label: 'Frequency',
                         data: frequencies,
                         backgroundColor: gradientColors,
-                        borderColor: '#58A6FF',
+                        borderColor: '#00E5FF',
                         borderWidth: 2,
-                        borderRadius: 6,
+                        borderRadius: 8,
                         borderSkipped: false,
                         hoverBackgroundColor: hoverColors,
                         hoverBorderColor: '#FFFFFF',
                         hoverBorderWidth: 3,
-                        hoverBorderRadius: 8,
+                        hoverBorderRadius: 10,
                         // Enhanced bar styling
                         barThickness: 'flex',
-                        maxBarThickness: 40,
-                        minBarLength: 2
+                        maxBarThickness: 45,
+                        minBarLength: 2,
+                        // Add subtle glow effect data
+                        shadowColor: '#00E5FF',
+                        shadowBlur: 15,
+                        shadowOffsetX: 0,
+                        shadowOffsetY: 0
                     }]
                 },
                 options: {
@@ -1017,6 +999,14 @@ class CognitiveChartManager {
                             right: 20,
                             top: 10,
                             bottom: 10
+                        }
+                    },
+                    animation: {
+                        duration: 1000,
+                        easing: 'easeInOutQuart',
+                        delay: function(context) {
+                            // Staggered animation delay for each bar
+                            return context.dataIndex * 150;
                         }
                     },
                     plugins: {
@@ -1067,14 +1057,14 @@ class CognitiveChartManager {
                             ...this.chartConfig.scales.x,
                             beginAtZero: true,
                             grid: {
-                                color: 'rgba(88, 166, 255, 0.1)',
-                                borderColor: 'rgba(88, 166, 255, 0.3)',
-                                lineWidth: 1
+                                color: 'rgba(0, 229, 255, 0.08)',
+                                borderColor: 'rgba(0, 229, 255, 0.2)',
+                                lineWidth: 0.5
                             },
                             ticks: {
                                 color: '#C9D1D9',
                                 font: {
-                                    family: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
+                                    family: 'Roboto Mono, SF Mono, Monaco, monospace',
                                     size: 11,
                                     weight: '500'
                                 },
@@ -1087,7 +1077,7 @@ class CognitiveChartManager {
                                 text: 'Discussion Frequency',
                                 color: '#C9D1D9',
                                 font: {
-                                    family: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
+                                    family: 'Roboto Mono, SF Mono, Monaco, monospace',
                                     size: 12,
                                     weight: '600'
                                 },
@@ -1104,7 +1094,7 @@ class CognitiveChartManager {
                             ticks: {
                                 color: '#C9D1D9',
                                 font: {
-                                    family: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
+                                    family: 'Roboto Mono, SF Mono, Monaco, monospace',
                                     size: 11,
                                     weight: '600'
                                 },
@@ -1115,7 +1105,7 @@ class CognitiveChartManager {
                                 text: 'Conversation Themes',
                                 color: '#C9D1D9',
                                 font: {
-                                    family: 'SF Pro Display, -apple-system, BlinkMacSystemFont, sans-serif',
+                                    family: 'Roboto Mono, SF Mono, Monaco, monospace',
                                     size: 12,
                                     weight: '600'
                                 },
@@ -1281,30 +1271,36 @@ class CognitiveChartManager {
         const dominantEmotion = labels[maxIndex];
         const dominantPercentage = Math.round((values[maxIndex] / totalValue) * 100);
         
-        // Enhanced color palette with HUD theme variations
-        const emotionalColors = [
-            '#58A6FF',  // Primary Cyan - Curious
-            '#7C3AED',  // Purple - Analytical  
-            '#10B981',  // Emerald - Optimistic
-            '#F59E0B',  // Amber - Thoughtful
-            '#EF4444',  // Red - Creative
-            '#8B5CF6',  // Violet - Empathetic
-            '#06B6D4',  // Cyan variant
-            '#EC4899',  // Pink variant
-            '#84CC16',  // Lime variant
-            '#F97316'   // Orange variant
-        ];
+        // Enhanced multi-color palette for different emotions
+        const emotionalColors = {
+            'Analytical': '#00E5FF',    // Electric Cyan - Analytical thinking
+            'Creative': '#8B5CF6',      // Purple - Creative expression
+            'Optimistic': '#10B981',    // Emerald - Positive outlook
+            'Curious': '#58A6FF',       // Blue - Inquisitive nature
+            'Thoughtful': '#F59E0B',    // Amber - Deep contemplation
+            'Empathetic': '#EC4899',    // Pink - Emotional understanding
+            'Focused': '#06B6D4',       // Cyan variant - Concentration
+            'Innovative': '#EF4444',    // Red - Breakthrough thinking
+            'Reflective': '#84CC16',    // Lime - Self-awareness
+            'Collaborative': '#F97316'  // Orange - Team-oriented
+        };
         
-        // Create gradient colors based on intensity
+        // Create gradient colors with varying intensity
         const backgroundColors = values.map((value, index) => {
-            const baseColor = emotionalColors[index % emotionalColors.length];
+            const emotion = labels[index];
+            const baseColor = emotionalColors[emotion] || emotionalColors['Curious'];
             const intensity = value / Math.max(...values);
-            const alpha = 0.7 + (intensity * 0.3); // Range from 0.7 to 1.0
+            const alpha = 0.6 + (intensity * 0.4); // Range from 0.6 to 1.0
             return this.hexToRgba(baseColor, alpha);
         });
         
+        const borderColors = labels.map((emotion, index) => {
+            return emotionalColors[emotion] || emotionalColors['Curious'];
+        });
+        
         const hoverColors = values.map((value, index) => {
-            const baseColor = emotionalColors[index % emotionalColors.length];
+            const emotion = labels[index];
+            const baseColor = emotionalColors[emotion] || emotionalColors['Curious'];
             return baseColor; // Full opacity on hover
         });
         
@@ -1316,15 +1312,20 @@ class CognitiveChartManager {
                     datasets: [{
                         data: values,
                         backgroundColor: backgroundColors,
-                        borderColor: emotionalColors.slice(0, values.length),
-                        borderWidth: 3,
+                        borderColor: borderColors,
+                        borderWidth: 4,
                         hoverBackgroundColor: hoverColors,
                         hoverBorderColor: '#FFFFFF',
-                        hoverBorderWidth: 4,
-                        hoverOffset: 12,
+                        hoverBorderWidth: 5,
+                        hoverOffset: 16,
                         // Enhanced segment styling
-                        borderRadius: 4,
-                        borderJoinStyle: 'round'
+                        borderRadius: 6,
+                        borderJoinStyle: 'round',
+                        // Add subtle shadow effect
+                        shadowColor: 'rgba(0, 229, 255, 0.3)',
+                        shadowBlur: 20,
+                        shadowOffsetX: 0,
+                        shadowOffsetY: 0
                     }]
                 },
                 options: {
@@ -1675,385 +1676,6 @@ class CognitiveChartManager {
                 this.updateChartStatus('emotional-landscape-status', 'Chart initialization error', 'error');
             }
         }
-    }
-    
-    /**
-     * Process memory data into chart-ready formats
-     */
-    processMemoryDataForCharts(memoryData) {
-        const insights = memoryData.insights || [];
-        const statistics = memoryData.statistics || {};
-        
-        // Core Values processing
-        const coreValues = this.extractCoreValues(insights, statistics);
-        
-        // Recurring Themes processing
-        const themes = this.extractRecurringThemes(insights, statistics);
-        
-        // Emotional Landscape processing
-        const emotions = this.extractEmotionalData(insights, statistics);
-        
-        return {
-            coreValues: {
-                labels: ['Creativity', 'Stability', 'Learning', 'Curiosity', 'Analysis', 'Empathy'],
-                values: coreValues
-            },
-            recurringThemes: {
-                labels: themes.map(t => t.theme),
-                frequencies: themes.map(t => t.frequency)
-            },
-            emotionalLandscape: {
-                labels: emotions.map(e => e.emotion),
-                values: emotions.map(e => e.intensity)
-            }
-        };
-    }
-    
-    /**
-     * Extract core values from insights data with enhanced analysis
-     */
-    extractCoreValues(insights, statistics) {
-        // Default values if no data available
-        const defaultValues = [3, 4, 5, 4, 3, 4];
-        
-        if (!insights || insights.length === 0) {
-            return defaultValues;
-        }
-        
-        // Enhanced keyword analysis with weighted terms and context
-        const valueKeywords = {
-            creativity: {
-                primary: ['creative', 'innovation', 'artistic', 'imagination', 'original', 'design', 'invent'],
-                secondary: ['unique', 'novel', 'brainstorm', 'inspire', 'vision', 'aesthetic', 'craft'],
-                context: ['art', 'music', 'writing', 'problem-solving', 'ideas']
-            },
-            stability: {
-                primary: ['stable', 'consistent', 'reliable', 'steady', 'secure', 'predictable'],
-                secondary: ['routine', 'structure', 'organized', 'methodical', 'systematic', 'planned'],
-                context: ['schedule', 'habit', 'process', 'framework', 'foundation']
-            },
-            learning: {
-                primary: ['learn', 'study', 'knowledge', 'education', 'growth', 'understand'],
-                secondary: ['research', 'explore', 'discover', 'master', 'skill', 'develop'],
-                context: ['course', 'book', 'tutorial', 'practice', 'improvement']
-            },
-            curiosity: {
-                primary: ['curious', 'explore', 'discover', 'question', 'wonder', 'investigate'],
-                secondary: ['why', 'how', 'what if', 'experiment', 'probe', 'inquire'],
-                context: ['mystery', 'unknown', 'possibility', 'adventure', 'exploration']
-            },
-            analysis: {
-                primary: ['analyze', 'logical', 'systematic', 'rational', 'critical', 'evaluate'],
-                secondary: ['data', 'evidence', 'reason', 'logic', 'method', 'objective'],
-                context: ['research', 'statistics', 'comparison', 'assessment', 'judgment']
-            },
-            empathy: {
-                primary: ['empathy', 'understanding', 'compassion', 'caring', 'emotional', 'support'],
-                secondary: ['help', 'listen', 'feel', 'connect', 'relate', 'comfort'],
-                context: ['relationship', 'friendship', 'community', 'kindness', 'sensitivity']
-            }
-        };
-        
-        const values = [];
-        const totalInsights = insights.length;
-        
-        Object.keys(valueKeywords).forEach(value => {
-            const keywords = valueKeywords[value];
-            let score = 0;
-            let matchCount = 0;
-            
-            insights.forEach(insight => {
-                const content = (insight.content || '').toLowerCase();
-                const evidence = (insight.evidence || '').toLowerCase();
-                const tags = (insight.tags || []).map(tag => tag.toLowerCase());
-                const confidence = insight.confidence || 0.5;
-                
-                let insightScore = 0;
-                
-                // Primary keywords (higher weight)
-                keywords.primary.forEach(keyword => {
-                    if (content.includes(keyword) || evidence.includes(keyword)) {
-                        insightScore += 1.0 * confidence;
-                        matchCount++;
-                    }
-                    if (tags.some(tag => tag.includes(keyword))) {
-                        insightScore += 0.8 * confidence;
-                        matchCount++;
-                    }
-                });
-                
-                // Secondary keywords (medium weight)
-                keywords.secondary.forEach(keyword => {
-                    if (content.includes(keyword) || evidence.includes(keyword)) {
-                        insightScore += 0.6 * confidence;
-                        matchCount++;
-                    }
-                    if (tags.some(tag => tag.includes(keyword))) {
-                        insightScore += 0.4 * confidence;
-                        matchCount++;
-                    }
-                });
-                
-                // Context keywords (lower weight)
-                keywords.context.forEach(keyword => {
-                    if (content.includes(keyword) || evidence.includes(keyword)) {
-                        insightScore += 0.3 * confidence;
-                    }
-                    if (tags.some(tag => tag.includes(keyword))) {
-                        insightScore += 0.2 * confidence;
-                    }
-                });
-                
-                score += insightScore;
-            });
-            
-            // Calculate normalized score with frequency consideration
-            let normalizedScore;
-            if (matchCount === 0) {
-                // No matches found, use baseline
-                normalizedScore = 2.5;
-            } else {
-                // Scale based on match frequency and total score
-                const frequency = matchCount / totalInsights;
-                const avgScore = score / Math.max(matchCount, 1);
-                
-                // Combine frequency and average score
-                const combinedScore = (frequency * 2) + (avgScore * 3);
-                
-                // Normalize to 1-5 scale with some baseline
-                normalizedScore = Math.min(5, Math.max(1, 1.5 + (combinedScore * 0.7)));
-            }
-            
-            values.push(Math.round(normalizedScore * 10) / 10); // Round to 1 decimal place
-        });
-        
-        // Ensure we have exactly 6 values
-        if (values.length !== 6) {
-            console.warn('Core values extraction returned unexpected number of values:', values.length);
-            return defaultValues;
-        }
-        
-        console.log('Extracted core values:', {
-            creativity: values[0],
-            stability: values[1],
-            learning: values[2],
-            curiosity: values[3],
-            analysis: values[4],
-            empathy: values[5]
-        });
-        
-        return values;
-    }
-    
-    /**
-     * Extract recurring themes from insights data with enhanced analysis
-     */
-    extractRecurringThemes(insights, statistics) {
-        const categories = statistics.categories || {};
-        
-        // If we have category statistics, use them as primary source
-        if (Object.keys(categories).length > 0) {
-            const categoryThemes = Object.entries(categories)
-                .map(([category, count]) => ({
-                    theme: category.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-                    frequency: count
-                }))
-                .sort((a, b) => b.frequency - a.frequency)
-                .slice(0, 8); // Get top 8 from categories
-            
-            if (categoryThemes.length >= 4) {
-                return categoryThemes.slice(0, 6); // Return top 6
-            }
-        }
-        
-        // Enhanced theme extraction from insights content
-        if (!insights || insights.length === 0) {
-            return [
-                { theme: 'Technology', frequency: 8 },
-                { theme: 'Philosophy', frequency: 6 },
-                { theme: 'Learning', frequency: 7 },
-                { theme: 'Creativity', frequency: 5 }
-            ];
-        }
-        
-        // Define comprehensive theme keywords with weighted scoring
-        const themeKeywords = {
-            'Technology': {
-                primary: ['technology', 'programming', 'software', 'computer', 'digital', 'ai', 'artificial intelligence', 'machine learning', 'algorithm', 'code', 'coding', 'development', 'tech'],
-                secondary: ['app', 'website', 'internet', 'online', 'cyber', 'data', 'database', 'system', 'platform', 'framework', 'api', 'cloud'],
-                context: ['innovation', 'automation', 'efficiency', 'optimization', 'integration', 'scalability']
-            },
-            'Philosophy': {
-                primary: ['philosophy', 'ethics', 'moral', 'meaning', 'existence', 'consciousness', 'reality', 'truth', 'wisdom', 'belief', 'value', 'principle'],
-                secondary: ['think', 'thought', 'idea', 'concept', 'theory', 'perspective', 'viewpoint', 'opinion', 'debate', 'argument'],
-                context: ['life', 'purpose', 'society', 'human nature', 'free will', 'determinism', 'metaphysics']
-            },
-            'Learning': {
-                primary: ['learn', 'learning', 'education', 'study', 'knowledge', 'skill', 'training', 'course', 'lesson', 'teach', 'instruction'],
-                secondary: ['understand', 'comprehend', 'grasp', 'master', 'practice', 'exercise', 'tutorial', 'guide', 'method', 'technique'],
-                context: ['improvement', 'development', 'growth', 'progress', 'achievement', 'competency']
-            },
-            'Creativity': {
-                primary: ['creative', 'creativity', 'art', 'artistic', 'design', 'imagination', 'innovative', 'original', 'inspiration', 'aesthetic'],
-                secondary: ['draw', 'paint', 'write', 'compose', 'create', 'craft', 'build', 'make', 'express', 'style'],
-                context: ['beauty', 'visual', 'music', 'literature', 'poetry', 'storytelling', 'performance']
-            },
-            'Science': {
-                primary: ['science', 'scientific', 'research', 'experiment', 'hypothesis', 'theory', 'discovery', 'analysis', 'method', 'evidence'],
-                secondary: ['biology', 'chemistry', 'physics', 'mathematics', 'psychology', 'sociology', 'medicine', 'health'],
-                context: ['observation', 'measurement', 'data', 'statistics', 'correlation', 'causation']
-            },
-            'Personal': {
-                primary: ['personal', 'self', 'identity', 'personality', 'character', 'emotion', 'feeling', 'relationship', 'family', 'friend'],
-                secondary: ['growth', 'development', 'improvement', 'goal', 'dream', 'aspiration', 'challenge', 'struggle'],
-                context: ['happiness', 'success', 'fulfillment', 'satisfaction', 'well-being', 'mental health']
-            },
-            'Business': {
-                primary: ['business', 'work', 'job', 'career', 'professional', 'company', 'organization', 'management', 'leadership', 'strategy'],
-                secondary: ['market', 'customer', 'client', 'service', 'product', 'sales', 'marketing', 'finance', 'profit'],
-                context: ['entrepreneurship', 'startup', 'innovation', 'competition', 'growth', 'success']
-            },
-            'Entertainment': {
-                primary: ['movie', 'film', 'book', 'game', 'music', 'show', 'entertainment', 'fun', 'hobby', 'leisure'],
-                secondary: ['watch', 'read', 'play', 'listen', 'enjoy', 'relax', 'recreation', 'activity'],
-                context: ['story', 'character', 'plot', 'genre', 'comedy', 'drama', 'adventure']
-            }
-        };
-        
-        const themeScores = {};
-        const totalInsights = insights.length;
-        
-        // Initialize theme scores
-        Object.keys(themeKeywords).forEach(theme => {
-            themeScores[theme] = 0;
-        });
-        
-        // Analyze each insight for theme indicators
-        insights.forEach(insight => {
-            const content = (insight.content || '').toLowerCase();
-            const evidence = (insight.evidence || '').toLowerCase();
-            const tags = (insight.tags || []).map(tag => tag.toLowerCase());
-            const confidence = insight.confidence || 0.5;
-            
-            Object.entries(themeKeywords).forEach(([theme, keywords]) => {
-                let themeScore = 0;
-                
-                // Primary keywords (highest weight)
-                keywords.primary.forEach(keyword => {
-                    if (content.includes(keyword)) themeScore += 1.0 * confidence;
-                    if (evidence.includes(keyword)) themeScore += 0.8 * confidence;
-                    if (tags.some(tag => tag.includes(keyword))) themeScore += 0.9 * confidence;
-                });
-                
-                // Secondary keywords (medium weight)
-                keywords.secondary.forEach(keyword => {
-                    if (content.includes(keyword)) themeScore += 0.6 * confidence;
-                    if (evidence.includes(keyword)) themeScore += 0.5 * confidence;
-                    if (tags.some(tag => tag.includes(keyword))) themeScore += 0.4 * confidence;
-                });
-                
-                // Context keywords (lower weight)
-                keywords.context.forEach(keyword => {
-                    if (content.includes(keyword)) themeScore += 0.3 * confidence;
-                    if (evidence.includes(keyword)) themeScore += 0.2 * confidence;
-                    if (tags.some(tag => tag.includes(keyword))) themeScore += 0.2 * confidence;
-                });
-                
-                themeScores[theme] += themeScore;
-            });
-        });
-        
-        // Convert scores to frequencies and filter meaningful themes
-        const themes = Object.entries(themeScores)
-            .map(([theme, score]) => {
-                // Convert score to frequency (approximate number of discussions)
-                const frequency = Math.max(1, Math.round(score * 2)); // Scale factor for readability
-                return { theme, frequency, rawScore: score };
-            })
-            .filter(item => item.rawScore > 0.5) // Only include themes with meaningful presence
-            .sort((a, b) => b.frequency - a.frequency)
-            .slice(0, 6); // Limit to top 6 themes
-        
-        // Ensure we have at least 4 themes for a meaningful chart
-        if (themes.length < 4) {
-            const defaultThemes = [
-                { theme: 'Technology', frequency: 8 },
-                { theme: 'Philosophy', frequency: 6 },
-                { theme: 'Learning', frequency: 7 },
-                { theme: 'Creativity', frequency: 5 }
-            ];
-            
-            // Merge with extracted themes, avoiding duplicates
-            const existingThemes = themes.map(t => t.theme);
-            const additionalThemes = defaultThemes.filter(t => !existingThemes.includes(t.theme));
-            
-            return [...themes, ...additionalThemes].slice(0, 6);
-        }
-        
-        console.log('Extracted recurring themes:', themes.map(t => `${t.theme}: ${t.frequency}`));
-        
-        return themes;
-    }
-    
-    /**
-     * Extract emotional data from insights
-     */
-    extractEmotionalData(insights, statistics) {
-        // Default emotional distribution if no data available
-        const defaultEmotions = [
-            { emotion: 'Curious', intensity: 30 },
-            { emotion: 'Analytical', intensity: 25 },
-            { emotion: 'Optimistic', intensity: 25 },
-            { emotion: 'Thoughtful', intensity: 20 }
-        ];
-        
-        if (!insights || insights.length === 0) {
-            return defaultEmotions;
-        }
-        
-        // Analyze insights for emotional indicators
-        const emotionKeywords = {
-            curious: ['curious', 'wonder', 'explore', 'discover'],
-            analytical: ['analyze', 'logical', 'systematic', 'rational'],
-            optimistic: ['positive', 'hopeful', 'optimistic', 'confident'],
-            thoughtful: ['thoughtful', 'reflective', 'contemplative', 'mindful'],
-            excited: ['excited', 'enthusiastic', 'passionate', 'energetic'],
-            concerned: ['worried', 'concerned', 'anxious', 'uncertain']
-        };
-        
-        const emotionScores = {};
-        
-        Object.keys(emotionKeywords).forEach(emotion => {
-            const keywords = emotionKeywords[emotion];
-            let score = 0;
-            
-            insights.forEach(insight => {
-                const content = (insight.content || '').toLowerCase();
-                keywords.forEach(keyword => {
-                    if (content.includes(keyword)) {
-                        score += insight.confidence || 0.5;
-                    }
-                });
-            });
-            
-            emotionScores[emotion] = score;
-        });
-        
-        // Convert to percentage distribution
-        const totalScore = Object.values(emotionScores).reduce((sum, score) => sum + score, 0);
-        
-        if (totalScore === 0) {
-            return defaultEmotions;
-        }
-        
-        return Object.entries(emotionScores)
-            .map(([emotion, score]) => ({
-                emotion: emotion.charAt(0).toUpperCase() + emotion.slice(1),
-                intensity: Math.round((score / totalScore) * 100)
-            }))
-            .filter(item => item.intensity > 0)
-            .sort((a, b) => b.intensity - a.intensity)
-            .slice(0, 6); // Limit to top 6 emotions
     }
     
     /**

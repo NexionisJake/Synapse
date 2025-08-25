@@ -10,6 +10,98 @@ document.addEventListener('DOMContentLoaded', function () {
     // Track if we're currently processing a message
     let isProcessing = false;
 
+    // Markdown rendering utilities
+    const MarkdownRenderer = {
+        /**
+         * Configure marked.js with secure settings
+         */
+        configure() {
+            if (typeof marked !== 'undefined') {
+                marked.setOptions({
+                    breaks: true, // Convert line breaks to <br>
+                    gfm: true, // GitHub Flavored Markdown
+                    sanitize: false, // We'll use DOMPurify for sanitization
+                    smartLists: true,
+                    smartypants: false
+                });
+            }
+        },
+
+        /**
+         * Convert Markdown text to safe HTML
+         * @param {string} markdownText - Raw markdown text from AI
+         * @returns {string} Safe HTML string
+         */
+        render(markdownText) {
+            if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
+                console.warn('Markdown libraries not loaded, falling back to plain text');
+                return this.escapeHtml(markdownText);
+            }
+
+            try {
+                // Parse markdown to HTML
+                const rawHtml = marked.parse(markdownText);
+                
+                // Sanitize HTML to prevent XSS attacks
+                const cleanHtml = DOMPurify.sanitize(rawHtml, {
+                    ALLOWED_TAGS: [
+                        'p', 'br', 'strong', 'em', 'u', 'strike', 'del',
+                        'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+                        'ul', 'ol', 'li',
+                        'blockquote', 'pre', 'code',
+                        'a', 'span', 'div'
+                    ],
+                    ALLOWED_ATTR: ['href', 'target', 'class'],
+                    ALLOW_DATA_ATTR: false
+                });
+
+                return cleanHtml;
+            } catch (error) {
+                console.error('Markdown rendering error:', error);
+                return this.escapeHtml(markdownText);
+            }
+        },
+
+        /**
+         * Escape HTML characters for safe display
+         * @param {string} text - Raw text to escape
+         * @returns {string} HTML-escaped text
+         */
+        escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        },
+
+        /**
+         * Set content with markdown rendering
+         * @param {HTMLElement} element - Target element
+         * @param {string} content - Markdown content
+         */
+        setContent(element, content) {
+            const renderedHtml = this.render(content);
+            element.innerHTML = renderedHtml;
+        },
+
+        /**
+         * Append content with markdown rendering (for streaming)
+         * @param {HTMLElement} element - Target element
+         * @param {string} content - New markdown content to append
+         */
+        appendContent(element, content) {
+            const existingContent = element.getAttribute('data-raw-content') || '';
+            const newContent = existingContent + content;
+            element.setAttribute('data-raw-content', newContent);
+            this.setContent(element, newContent);
+        }
+    };
+
+    // Initialize markdown renderer
+    MarkdownRenderer.configure();
+
+    // Expose MarkdownRenderer globally for use by performance optimizer
+    window.MarkdownRenderer = MarkdownRenderer;
+
     // Performance and optimization settings
     const PERFORMANCE_CONFIG = {
         MAX_CONVERSATION_LENGTH: 100,
@@ -122,7 +214,8 @@ document.addEventListener('DOMContentLoaded', function () {
             // Clear loading and show response
             contentElement.innerHTML = '';
             const textElement = document.createElement('div');
-            textElement.textContent = data.response;
+            textElement.classList.add('message-text-content');
+            MarkdownRenderer.setContent(textElement, data.response);
             contentElement.appendChild(textElement);
 
             // Remove streaming class
@@ -544,7 +637,7 @@ document.addEventListener('DOMContentLoaded', function () {
          */
         createStreamingTextElement(contentElement) {
             const textElement = document.createElement('div');
-            textElement.classList.add('streaming-text-content');
+            textElement.classList.add('message-text-content');
 
             if (this.enableCursor) {
                 textElement.classList.add('streaming-cursor');
@@ -646,7 +739,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.performanceOptimizer.optimizeStreamingRender(textElement, currentContent + newContent);
                     window.performanceOptimizer.optimizeDOMUpdate(scrollToBottom);
                 } else {
-                    textElement.textContent = currentContent + newContent;
+                    // Use Markdown renderer for streaming content
+                    MarkdownRenderer.setContent(textElement, currentContent + newContent);
                     scrollToBottom();
                 }
                 return;
@@ -663,7 +757,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     window.performanceOptimizer.optimizeStreamingRender(textElement, currentContent + newContent.substring(0, i + 1));
                     window.performanceOptimizer.optimizeDOMUpdate(scrollToBottom);
                 } else {
-                    textElement.textContent = currentContent + newContent.substring(0, i + 1);
+                    // Use Markdown renderer for typewriter effect
+                    MarkdownRenderer.setContent(textElement, currentContent + newContent.substring(0, i + 1));
                     scrollToBottom();
                 }
 
@@ -1025,7 +1120,7 @@ async function handleRegularResponse(aiResponseElement, requestStartTime) {
         // Display response
         const textElement = document.createElement('div');
         textElement.classList.add('message-text-content');
-        textElement.textContent = data.message;
+        MarkdownRenderer.setContent(textElement, data.message);
         contentElement.appendChild(textElement);
 
         // Remove streaming class
