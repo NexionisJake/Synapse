@@ -177,7 +177,7 @@ class AIService:
                         model=self.model,
                         messages=messages,
                         options={
-                            "timeout": 60  # 60 second timeout
+                            "timeout": 180  # Increased timeout for long-running analysis (3 minutes)
                         }
                     )
                     response_time = time.time() - start_time
@@ -277,7 +277,7 @@ class AIService:
                 messages=messages,
                 stream=True,
                 options={
-                    "timeout": 60
+                    "timeout": 180  # Increased timeout for streaming analysis
                 }
             )
             

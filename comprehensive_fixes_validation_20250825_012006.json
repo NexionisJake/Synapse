@@ -1,0 +1,91 @@
+{
+  "timestamp": "2025-08-25T01:20:02.548514",
+  "tests": {
+    "timeout_configuration": {
+      "status": "FAILED",
+      "duration": 1.7404556274414062e-05,
+      "details": {
+        "success": false,
+        "error": "Streaming timeout should be 180s, got None; AI service timeout should be 180s, got None",
+        "config_values": {
+          "analysis_timeout": 120,
+          "streaming_timeout": null,
+          "ai_timeout": null
+        }
+      },
+      "timestamp": "2025-08-25T01:20:02.548667"
+    },
+    "ai_service_initialization": {
+      "status": "FAILED",
+      "duration": 0.005878448486328125,
+      "details": {
+        "success": false,
+        "error": "AI service timeout not configured"
+      },
+      "timestamp": "2025-08-25T01:20:02.554591"
+    },
+    "serendipity_service_initialization": {
+      "status": "FAILED",
+      "duration": 0.006213665008544922,
+      "details": {
+        "success": false,
+        "error": "Memory service not initialized",
+        "has_ai_service": true,
+        "has_memory_service": false
+      },
+      "timestamp": "2025-08-25T01:20:02.560898"
+    },
+    "memory_data_validation": {
+      "status": "FAILED",
+      "duration": 0.0015065670013427734,
+      "details": {
+        "success": false,
+        "error": "Valid data failed validation: Insight 0 missing required field 'category'; Insufficient data for analysis. Found 1 items, need at least 3. Have more conversations to build up your memory."
+      },
+      "timestamp": "2025-08-25T01:20:02.562450"
+    },
+    "flask_app_timeout_endpoint": {
+      "status": "FAILED",
+      "duration": 4.0105345249176025,
+      "details": {
+        "success": false,
+        "error": "HTTP 404: {\n  \"category\": \"unknown\",\n  \"error\": true,\n  \"error_id\": \"ERR_20250825_012005_132275731324080\",\n  \"message\": \"An unexpected error occurred. Please try again, and contact support if the problem persists.\",\n  \"timestamp\": \"2025-08-25T01:20:05.570619\"\n}\n"
+      },
+      "timestamp": "2025-08-25T01:20:06.573033"
+    },
+    "error_handling_categories": {
+      "status": "PASSED",
+      "duration": 0.0021190643310546875,
+      "details": {
+        "success": true,
+        "error_tests": {
+          "empty_data": {
+            "success": true,
+            "error_type": "InsufficientDataError",
+            "error_message": "Insufficient data for analysis. Found 0 items, need at least 3. Have more conversations to build up your memory.; No insights or conversation summaries found",
+            "has_expected_keywords": true
+          },
+          "invalid_data": {
+            "success": true,
+            "error_type": "InsufficientDataError",
+            "error_message": "Insufficient data for analysis. Found 0 items, need at least 3. Have more conversations to build up your memory.; No insights or conversation summaries found",
+            "has_expected_keywords": true
+          },
+          "minimal_data": {
+            "success": true,
+            "error_type": "InsufficientDataError",
+            "error_message": "Insufficient data for analysis. Found 0 items, need at least 3. Have more conversations to build up your memory.; No insights or conversation summaries found",
+            "has_expected_keywords": true
+          }
+        }
+      },
+      "timestamp": "2025-08-25T01:20:06.575319"
+    }
+  },
+  "summary": {
+    "total": 6,
+    "passed": 1,
+    "failed": 5,
+    "errors": []
+  }
+}

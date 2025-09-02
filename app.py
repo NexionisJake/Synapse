@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, Response
+from flask import Flask, render_template, request, jsonify, Response, send_from_directory
 import os
 import logging
 import time
@@ -6,7 +6,6 @@ from datetime import datetime
 from config import get_config, print_config_summary
 from ai_service import get_ai_service, AIServiceError
 from memory_service import get_memory_service, MemoryServiceError
-from serendipity_service import get_serendipity_service, SerendipityServiceError
 from prompt_service import get_prompt_service, PromptServiceError
 from error_handler import get_error_handler, ErrorCategory, ErrorSeverity, create_error_response
 from performance_optimizer import (
@@ -55,6 +54,15 @@ def not_found_error(error):
     )
     response, status_code = create_error_response(error_info, 404)
     return jsonify(response), status_code
+
+@app.errorhandler(405)
+def method_not_allowed_error(error):
+    """Handle 405 Method Not Allowed errors"""
+    return jsonify({
+        "error": "Method not allowed",
+        "message": f"HTTP method {request.method} is not supported for this endpoint",
+        "allowed_methods": error.valid_methods if hasattr(error, 'valid_methods') else []
+    }), 405
 
 @app.errorhandler(500)
 def internal_error(error):
@@ -197,6 +205,46 @@ def log_chart_error():
         logger.error(f"Failed to log chart error: {e}")
         return jsonify({'error': 'Failed to log error'}), 500
 
+def _process_chat_interaction(conversation_history: list, stream: bool = False) -> Response:
+    """
+    Helper function to process a chat interaction, handling both streaming and non-streaming.
+    This centralizes the core logic for conversation cleanup, statistics, and AI interaction.
+    
+    Args:
+        conversation_history: The conversation history to process.
+        stream: Boolean indicating if a streaming response is requested.
+        
+    Returns:
+        A Flask Response object, either a JSON response or a streaming response.
+    """
+    # Apply conversation history cleanup if needed
+    if conversation_manager.should_cleanup(len(conversation_history)):
+        original_length = len(conversation_history)
+        conversation_history = conversation_manager.cleanup_conversation_history(conversation_history)
+        if len(conversation_history) != original_length:
+            logger.info(f"Cleaned up conversation history: {original_length} -> {len(conversation_history)} messages")
+    
+    # Record conversation statistics
+    performance_metrics.conversation_stats['total_requests'] += 1
+    performance_metrics.conversation_stats['total_messages'] += len(conversation_history)
+    
+    # Log the incoming request
+    logger.info(f"Processing chat request with {len(conversation_history)} messages (streaming: {stream})")
+    
+    # Get AI service instance
+    ai_service = get_ai_service(
+        model=config.OLLAMA_MODEL,
+        system_prompt=get_current_system_prompt()
+    )
+    
+    if stream:
+        return handle_streaming_chat(ai_service, conversation_history)
+    else:
+        ai_response = ai_service.chat(conversation_history)
+        response_data = {"message": ai_response, "timestamp": datetime.now().isoformat(), "model": config.OLLAMA_MODEL}
+        logger.info(f"Successfully processed chat request, response length: {len(ai_response)}")
+        return jsonify(response_data)
+
 @app.route('/chat', methods=['POST', 'OPTIONS'])
 @response_monitor.monitor_request
 @security_required(validate_json=True, validate_conversation=True)
@@ -253,42 +301,8 @@ def chat():
                 "message": "Conversation history cannot be empty"
             }), 400
         
-        # Apply conversation history cleanup if needed
-        if conversation_manager.should_cleanup(len(conversation_history)):
-            original_length = len(conversation_history)
-            conversation_history = conversation_manager.cleanup_conversation_history(conversation_history)
-            if len(conversation_history) != original_length:
-                logger.info(f"Cleaned up conversation history: {original_length} -> {len(conversation_history)} messages")
-        
-        # Record conversation statistics
-        performance_metrics.conversation_stats['total_requests'] += 1
-        performance_metrics.conversation_stats['total_messages'] += len(conversation_history)
-        
-        # Log the incoming request
-        logger.info(f"Processing chat request with {len(conversation_history)} messages (streaming: {stream_requested})")
-        
-        # Get AI service instance
-        ai_service = get_ai_service(
-            model=config.OLLAMA_MODEL,
-            system_prompt=get_current_system_prompt()
-        )
-        
-        if stream_requested:
-            # Return streaming response
-            return handle_streaming_chat(ai_service, conversation_history)
-        else:
-            # Process conversation with AI (non-streaming)
-            ai_response = ai_service.chat(conversation_history)
-            
-            # Return successful response
-            response_data = {
-                "message": ai_response,
-                "timestamp": datetime.now().isoformat(),
-                "model": config.OLLAMA_MODEL
-            }
-            
-            logger.info(f"Successfully processed chat request, response length: {len(ai_response)}")
-            return jsonify(response_data)
+        # Delegate to the centralized processing function
+        return _process_chat_interaction(conversation_history, stream=stream_requested)
         
     except AIServiceError as e:
         error_handler = get_error_handler()
@@ -630,38 +644,8 @@ def chat_legacy():
                 "message": "Conversation history cannot be empty"
             }), 400
         
-        # Apply conversation history cleanup if needed
-        if conversation_manager.should_cleanup(len(conversation_history)):
-            original_length = len(conversation_history)
-            conversation_history = conversation_manager.cleanup_conversation_history(conversation_history)
-            if len(conversation_history) != original_length:
-                logger.info(f"Cleaned up conversation history: {original_length} -> {len(conversation_history)} messages")
-        
-        # Record conversation statistics
-        performance_metrics.conversation_stats['total_requests'] += 1
-        performance_metrics.conversation_stats['total_messages'] += len(conversation_history)
-        
-        # Log the incoming request
-        logger.info(f"Processing chat request with {len(conversation_history)} messages")
-        
-        # Get AI service instance
-        ai_service = get_ai_service(
-            model=config.OLLAMA_MODEL,
-            system_prompt=get_current_system_prompt()
-        )
-        
-        # Process conversation with AI
-        ai_response = ai_service.chat(conversation_history)
-        
-        # Return successful response
-        response_data = {
-            "message": ai_response,
-            "timestamp": datetime.now().isoformat(),
-            "model": config.OLLAMA_MODEL
-        }
-        
-        logger.info(f"Successfully processed chat request, response length: {len(ai_response)}")
-        return jsonify(response_data)
+        # Delegate to the centralized processing function
+        return _process_chat_interaction(conversation_history, stream=False)
         
     except AIServiceError as e:
         error_handler = get_error_handler()
@@ -794,34 +778,13 @@ def memory_stats():
 @app.route('/api/health')
 def health_check():
     """Simple health check endpoint for connection testing"""
-    try:
-        # Test AI service connection
-        ai_status = 'unavailable'
-        try:
-            ai_service = get_ai_service(
-                model=config.OLLAMA_MODEL,
-                system_prompt=get_current_system_prompt()
-            )
-            status_result = ai_service.test_connection()
-            ai_status = 'ready' if status_result.get('status') == 'connected' else 'unavailable'
-        except Exception as ai_error:
-            logger.warning(f"AI service health check failed: {ai_error}")
-            ai_status = 'unavailable'
-        
-        return jsonify({
-            'status': 'healthy',
-            'timestamp': datetime.now().isoformat(),
-            'services': {
-                'memory': 'available',
-                'ai': ai_status
-            }
-        })
-    except Exception as e:
-        logger.error(f"Health check failed: {e}")
-        return jsonify({
-            'status': 'error',
-            'error': 'An internal error occurred while performing health check.'
-        }), 500
+    # This endpoint should be fast and not depend on external services like the AI model.
+    # Its purpose is to confirm that the Flask server itself is running and responsive.
+    # The more detailed `/api/status` endpoint is used for checking downstream services.
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat()
+    })
 
 @app.route('/api/insights')
 def get_insights():
@@ -862,75 +825,269 @@ def get_insights():
             "message": "An internal error occurred while retrieving dashboard insights."
         }), 500
 
-@app.route('/api/serendipity', methods=['GET', 'HEAD', 'POST'])
-def discover_serendipity():
+@app.route('/api/serendipity', methods=['GET', 'POST', 'HEAD'])
+@security_required(validate_json=False)
+def serendipity_analysis():
     """
-    Serendipity engine endpoint to discover unexpected connections in memory data
+    Serendipity analysis API endpoint for discovering hidden connections
     
-    Returns JSON response with discovered connections and patterns
+    GET/HEAD: Returns service status and availability
+    POST: Performs serendipity analysis on user's memory data
     """
     try:
+        # Import serendipity service
+        from serendipity_service import get_serendipity_service, SerendipityServiceError
+        
         # Handle HEAD requests for availability check
         if request.method == 'HEAD':
-            return '', 200
+            if not config.ENABLE_SERENDIPITY_ENGINE:
+                return '', 503  # Service Unavailable
+            return '', 200  # OK
         
-        # Handle GET requests for basic status
+        # Handle GET requests for status
         if request.method == 'GET':
+            if not config.ENABLE_SERENDIPITY_ENGINE:
+                return jsonify({
+                    "enabled": False,
+                    "message": "Serendipity engine is disabled",
+                    "status": "disabled"
+                }), 503
+            
+            # Get service status
+            serendipity_service = get_serendipity_service(config=config)
+            status = serendipity_service.get_service_status()
+            
             return jsonify({
-                'status': 'available',
-                'endpoint': '/api/serendipity',
-                'methods': ['GET', 'HEAD', 'POST'],
-                'description': 'Serendipity engine for discovering unexpected connections'
+                "enabled": True,
+                "status": "available",
+                "service_info": status,
+                "timeout": config.SERENDIPITY_ANALYSIS_TIMEOUT,
+                "streaming_timeout": config.STREAMING_TIMEOUT,
+                "timestamp": datetime.now().isoformat()
             })
         
-        # For POST requests, validate JSON
+        # Handle POST requests for analysis
         if request.method == 'POST':
-            if not request.is_json:
+            if not config.ENABLE_SERENDIPITY_ENGINE:
                 return jsonify({
-                    "error": "Invalid request format",
-                    "message": "Request must be JSON"
-                }), 400
-        
-        logger.info("Processing serendipity discovery request")
-        
-        # Get serendipity service instance
-        serendipity_service = get_serendipity_service(
-            model=config.OLLAMA_MODEL,
-            memory_file=config.MEMORY_FILE
-        )
-        
-        # Analyze memory for connections
-        connections_data = serendipity_service.analyze_memory()
-        
-        # Return successful response
-        logger.info(f"Successfully discovered {len(connections_data.get('connections', []))} connections")
-        return jsonify(connections_data)
-        
+                    "error": "Service disabled",
+                    "message": "Serendipity engine is disabled. Enable it by setting ENABLE_SERENDIPITY_ENGINE=True"
+                }), 503
+            
+            # Additional security validation for POST requests
+            # Check for any unexpected JSON payload (should be empty for this endpoint)
+            if request.is_json:
+                data = request.get_json()
+                if data is not None and len(data) > 0:
+                    logger.warning(f"Serendipity analysis received unexpected JSON payload: {list(data.keys())}")
+                    return jsonify({
+                        "error": "Invalid request",
+                        "message": "This endpoint does not accept JSON payload. Analysis is performed on stored memory data."
+                    }), 400
+            
+            # Get serendipity service instance
+            serendipity_service = get_serendipity_service(config=config)
+            
+            # Perform analysis
+            logger.info("Starting serendipity analysis")
+            analysis_results = serendipity_service.analyze_memory()
+            
+            logger.info(f"Serendipity analysis completed successfully with {len(analysis_results.get('connections', []))} connections")
+            return jsonify(analysis_results)
+    
     except SerendipityServiceError as e:
+        logger.error(f"Serendipity service error: {e}")
         # Sanitize error message for security
         sanitized_message = sanitize_error_for_user(e, "Serendipity analysis error")
-        logger.error(f"Serendipity service error: {e}")
         return jsonify({
-            "error": "Serendipity analysis error",
+            "error": "Analysis failed",
             "message": sanitized_message,
-            "connections": [],
-            "meta_patterns": [],
-            "serendipity_summary": "Unable to analyze connections at this time.",
-            "recommendations": ["Please try again later or ensure you have sufficient conversation history."]
-        }), 503
+            "timestamp": datetime.now().isoformat()
+        }), 400
     
     except Exception as e:
+        logger.error(f"Unexpected error in serendipity analysis: {e}")
         # Sanitize error message for security
-        sanitized_message = sanitize_error_for_user(e, "Serendipity analysis error")
-        logger.error(f"Unexpected error in serendipity endpoint: {e}")
+        sanitized_message = sanitize_error_for_user(e, "Serendipity service error")
         return jsonify({
-            "error": "Internal server error",
+            "error": "Service error",
             "message": sanitized_message,
-            "connections": [],
-            "meta_patterns": [],
-            "serendipity_summary": "Analysis temporarily unavailable.",
-            "recommendations": ["Please try again later."]
+            "timestamp": datetime.now().isoformat()
         }), 500
+
+
+@app.route('/api/serendipity/history', methods=['GET'])
+@security_required(validate_json=False)
+def serendipity_history():
+    """
+    Get serendipity analysis history
+    
+    Query parameters:
+    - limit: Maximum number of analyses to return (optional)
+    """
+    try:
+        if not config.ENABLE_SERENDIPITY_ENGINE:
+            return jsonify({
+                "error": "Service disabled",
+                "message": "Serendipity engine is disabled"
+            }), 503
+        
+        from serendipity_service import get_serendipity_service, SerendipityServiceError
+        
+        # Get query parameters
+        limit = request.args.get('limit', type=int)
+        
+        # Get service and history
+        serendipity_service = get_serendipity_service(config=config)
+        history = serendipity_service.get_analysis_history(limit=limit)
+        
+        return jsonify(history)
+    
+    except SerendipityServiceError as e:
+        logger.error(f"Serendipity history error: {e}")
+        sanitized_message = sanitize_error_for_user(e, "History retrieval error")
+        return jsonify({
+            "error": "History retrieval failed",
+            "message": sanitized_message
+        }), 500
+    
+    except Exception as e:
+        logger.error(f"Unexpected error in serendipity history: {e}")
+        sanitized_message = sanitize_error_for_user(e, "History service error")
+        return jsonify({
+            "error": "Service error",
+            "message": sanitized_message
+        }), 500
+
+
+@app.route('/api/serendipity/analytics', methods=['GET'])
+@security_required(validate_json=False)
+def serendipity_analytics():
+    """
+    Get serendipity usage analytics and performance metrics
+    """
+    try:
+        if not config.ENABLE_SERENDIPITY_ENGINE:
+            return jsonify({
+                "error": "Service disabled",
+                "message": "Serendipity engine is disabled"
+            }), 503
+        
+        from serendipity_service import get_serendipity_service, SerendipityServiceError
+        
+        # Get service and analytics
+        serendipity_service = get_serendipity_service(config=config)
+        analytics = serendipity_service.get_usage_analytics()
+        
+        return jsonify(analytics)
+    
+    except SerendipityServiceError as e:
+        logger.error(f"Serendipity analytics error: {e}")
+        sanitized_message = sanitize_error_for_user(e, "Analytics retrieval error")
+        return jsonify({
+            "error": "Analytics retrieval failed",
+            "message": sanitized_message
+        }), 500
+    
+    except Exception as e:
+        logger.error(f"Unexpected error in serendipity analytics: {e}")
+        sanitized_message = sanitize_error_for_user(e, "Analytics service error")
+        return jsonify({
+            "error": "Service error",
+            "message": sanitized_message
+        }), 500
+
+
+@app.route('/api/serendipity/performance', methods=['GET'])
+@security_required(validate_json=False)
+def serendipity_performance():
+    """
+    Get serendipity performance metrics and system status
+    """
+    try:
+        if not config.ENABLE_SERENDIPITY_ENGINE:
+            return jsonify({
+                "error": "Service disabled",
+                "message": "Serendipity engine is disabled"
+            }), 503
+        
+        from serendipity_service import get_serendipity_service, SerendipityServiceError
+        
+        # Get service and performance metrics
+        serendipity_service = get_serendipity_service(config=config)
+        performance_metrics = serendipity_service.get_performance_metrics()
+        
+        return jsonify(performance_metrics)
+    
+    except SerendipityServiceError as e:
+        logger.error(f"Serendipity performance error: {e}")
+        sanitized_message = sanitize_error_for_user(e, "Performance metrics error")
+        return jsonify({
+            "error": "Performance metrics failed",
+            "message": sanitized_message
+        }), 500
+    
+    except Exception as e:
+        logger.error(f"Unexpected error in serendipity performance: {e}")
+        sanitized_message = sanitize_error_for_user(e, "Performance service error")
+        return jsonify({
+            "error": "Service error",
+            "message": sanitized_message
+        }), 500
+
+
+@app.route('/api/serendipity/cache', methods=['DELETE'])
+@security_required(validate_json=False)
+def serendipity_cache_clear():
+    """
+    Clear serendipity service caches
+    
+    Query parameters:
+    - type: Cache type to clear ('memory', 'analysis', 'formatted', or 'all')
+    """
+    try:
+        if not config.ENABLE_SERENDIPITY_ENGINE:
+            return jsonify({
+                "error": "Service disabled",
+                "message": "Serendipity engine is disabled"
+            }), 503
+        
+        from serendipity_service import get_serendipity_service, SerendipityServiceError
+        
+        # Get query parameters
+        cache_type = request.args.get('type', 'all')
+        if cache_type not in ['memory', 'analysis', 'formatted', 'all']:
+            return jsonify({
+                "error": "Invalid cache type",
+                "message": "Cache type must be one of: memory, analysis, formatted, all"
+            }), 400
+        
+        # Get service and clear cache
+        serendipity_service = get_serendipity_service(config=config)
+        cleared_counts = serendipity_service.clear_cache(cache_type if cache_type != 'all' else None)
+        
+        return jsonify({
+            "message": "Cache cleared successfully",
+            "cleared_counts": cleared_counts,
+            "cache_type": cache_type
+        })
+    
+    except SerendipityServiceError as e:
+        logger.error(f"Serendipity cache clear error: {e}")
+        sanitized_message = sanitize_error_for_user(e, "Cache clear error")
+        return jsonify({
+            "error": "Cache clear failed",
+            "message": sanitized_message
+        }), 500
+    
+    except Exception as e:
+        logger.error(f"Unexpected error in serendipity cache clear: {e}")
+        sanitized_message = sanitize_error_for_user(e, "Cache service error")
+        return jsonify({
+            "error": "Service error",
+            "message": sanitized_message
+        }), 500
+
 
 @app.route('/api/prompt/current')
 def get_current_prompt():

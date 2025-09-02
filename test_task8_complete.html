@@ -1,13 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Task 8 Complete: Emotional Landscape Chart - Synapse AI</title>
-    
+
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
+
     <!-- Enhanced HUD Theme CSS -->
     <style>
         :root {
@@ -16,17 +17,17 @@
             --hud-text-primary: #C9D1D9;
             --hud-accent-cyan: #58A6FF;
             --hud-accent-glow: rgba(88, 166, 255, 0.3);
-            
+
             /* Glassmorphism Properties */
             --glass-bg: rgba(255, 255, 255, 0.1);
             --glass-border: rgba(255, 255, 255, 0.2);
             --glass-blur: blur(10px);
-            
+
             /* Glow Effects */
             --glow-small: 0 0 10px var(--hud-accent-glow);
             --glow-medium: 0 0 20px var(--hud-accent-glow);
             --glow-large: 0 0 30px var(--hud-accent-glow);
-            
+
             /* Layout Properties */
             --border-radius: 12px;
             --transition-speed: 0.3s;
@@ -44,10 +45,10 @@
             font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, sans-serif;
             min-height: 100vh;
             padding: 20px;
-            background: linear-gradient(135deg, 
-                var(--hud-bg-primary) 0%, 
-                #161B22 50%, 
-                var(--hud-bg-primary) 100%);
+            background: linear-gradient(135deg,
+                    var(--hud-bg-primary) 0%,
+                    #161B22 50%,
+                    var(--hud-bg-primary) 100%);
         }
 
         .test-container {
@@ -187,7 +188,8 @@
             position: relative;
             height: 500px;
             width: 100%;
-            min-width: 600px; /* Ensure minimum width for side text */
+            min-width: 600px;
+            /* Ensure minimum width for side text */
         }
 
         .demo-controls {
@@ -247,7 +249,8 @@
             display: grid;
             grid-template-columns: 1fr;
             gap: 30px;
-            max-width: 1000px; /* Increased width for side text */
+            max-width: 1000px;
+            /* Increased width for side text */
             margin: 0 auto;
         }
 
@@ -255,11 +258,11 @@
             .test-title {
                 font-size: 2rem;
             }
-            
+
             .chart-wrapper {
                 height: 400px;
             }
-            
+
             .demo-controls {
                 flex-direction: column;
                 align-items: center;
@@ -267,6 +270,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="test-container">
         <div class="test-header">
@@ -285,7 +289,7 @@
                     <li>Smooth animations and transitions</li>
                 </ul>
             </div>
-            
+
             <div class="feature-card">
                 <h3>✓ HUD Color Scheme</h3>
                 <ul>
@@ -295,7 +299,7 @@
                     <li>Glassmorphism effects</li>
                 </ul>
             </div>
-            
+
             <div class="feature-card">
                 <h3>✓ Center Text Display</h3>
                 <ul>
@@ -305,7 +309,7 @@
                     <li>Glowing text effects</li>
                 </ul>
             </div>
-            
+
             <div class="feature-card">
                 <h3>✓ Interactive Legend</h3>
                 <ul>
@@ -343,14 +347,14 @@
         <div class="validation-section">
             <h2 class="section-title">Validation Results</h2>
             <div class="validation-results" id="validation-output">
-Click "Run Validation" to test all implemented features...
+                Click "Run Validation" to test all implemented features...
             </div>
         </div>
     </div>
 
     <!-- Include the cognitive charts manager -->
     <script src="static/js/cognitive-charts.js"></script>
-    
+
     <!-- Include validation script -->
     <script src="test_task8_validation.js"></script>
 
@@ -379,12 +383,12 @@ Click "Run Validation" to test all implemented features...
         };
 
         // Initialize chart manager when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             console.log('Initializing Task 8 Complete Demo');
-            
+
             const dashboardElement = document.querySelector('.charts-grid');
             chartManager = new CognitiveChartManager(dashboardElement);
-            
+
             // Show initial sample data
             showSampleData();
         });
@@ -408,12 +412,12 @@ Click "Run Validation" to test all implemented features...
             console.log('Showing sample emotional data');
             updateStatus('Loading sample data...', 'loading');
             currentDemo = 'sample';
-            
+
             setTimeout(() => {
                 chartManager.createEmotionalLandscapeChart(demoData.sample);
                 updateStatus('Sample Data Loaded', 'success');
             }, 500);
-            
+
             updateActiveButton(event.target);
         }
 
@@ -421,12 +425,12 @@ Click "Run Validation" to test all implemented features...
             console.log('Showing processed emotional data');
             updateStatus('Processing insights...', 'loading');
             currentDemo = 'processed';
-            
+
             setTimeout(() => {
                 chartManager.createEmotionalLandscapeChart(demoData.processed);
                 updateStatus('Processed Data Loaded', 'success');
             }, 800);
-            
+
             updateActiveButton(event.target);
         }
 
@@ -434,12 +438,12 @@ Click "Run Validation" to test all implemented features...
             console.log('Showing minimal emotional data');
             updateStatus('Loading minimal data...', 'loading');
             currentDemo = 'minimal';
-            
+
             setTimeout(() => {
                 chartManager.createEmotionalLandscapeChart(demoData.minimal);
                 updateStatus('Minimal Data Loaded', 'success');
             }, 500);
-            
+
             updateActiveButton(event.target);
         }
 
@@ -447,37 +451,37 @@ Click "Run Validation" to test all implemented features...
             console.log('Showing enhanced emotional data');
             updateStatus('Loading enhanced data...', 'loading');
             currentDemo = 'enhanced';
-            
+
             setTimeout(() => {
                 chartManager.createEmotionalLandscapeChart(demoData.enhanced);
                 updateStatus('Enhanced Data Loaded', 'success');
             }, 600);
-            
+
             updateActiveButton(event.target);
         }
 
         function runValidation() {
             console.log('Running comprehensive validation tests');
             updateStatus('Running validation...', 'loading');
-            
+
             const outputElement = document.getElementById('validation-output');
             outputElement.textContent = 'Running validation tests...\n\n';
-            
+
             // Capture console output
             const originalLog = console.log;
             const originalError = console.error;
             let validationOutput = '';
-            
-            console.log = function(...args) {
+
+            console.log = function (...args) {
                 validationOutput += args.join(' ') + '\n';
                 originalLog.apply(console, args);
             };
-            
-            console.error = function(...args) {
+
+            console.error = function (...args) {
                 validationOutput += 'ERROR: ' + args.join(' ') + '\n';
                 originalError.apply(console, args);
             };
-            
+
             setTimeout(() => {
                 try {
                     // Run validation tests
@@ -486,14 +490,14 @@ Click "Run Validation" to test all implemented features...
                         const result = validationTests[testName](chartManager);
                         results.push({ test: testName, passed: result });
                     });
-                    
+
                     // Summary
                     const passed = results.filter(r => r.passed).length;
                     const total = results.length;
-                    
+
                     validationOutput += '\n=== VALIDATION SUMMARY ===\n';
                     validationOutput += `Tests passed: ${passed}/${total}\n`;
-                    
+
                     if (passed === total) {
                         validationOutput += '🎉 All tests passed! Task 8 implementation is complete.\n';
                         updateStatus('All Tests Passed', 'success');
@@ -504,28 +508,28 @@ Click "Run Validation" to test all implemented features...
                         });
                         updateStatus(`${passed}/${total} Tests Passed`, 'loading');
                     }
-                    
+
                 } catch (error) {
                     validationOutput += '\nValidation error: ' + error.message + '\n';
                     updateStatus('Validation Error', 'error');
                 }
-                
+
                 // Restore console
                 console.log = originalLog;
                 console.error = originalError;
-                
+
                 // Display results
                 outputElement.textContent = validationOutput;
-                
+
             }, 1000);
-            
+
             updateActiveButton(event.target);
         }
 
         // Demonstrate chart interactivity
         function demonstrateInteractivity() {
             console.log('Demonstrating chart interactivity features');
-            
+
             const chart = chartManager.charts.emotionalLandscape;
             if (chart) {
                 console.log('✓ Chart hover and click interactions available');
@@ -540,4 +544,5 @@ Click "Run Validation" to test all implemented features...
         setTimeout(demonstrateInteractivity, 3000);
     </script>
 </body>
+
 </html>

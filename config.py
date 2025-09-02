@@ -125,6 +125,82 @@ class Config:
     def ENABLE_PERFORMANCE_MONITORING(self):
         return os.environ.get('ENABLE_PERFORMANCE_MONITORING', 'True').lower() == 'true'
     
+    # Serendipity Engine Configuration
+    @property
+    def SERENDIPITY_MIN_INSIGHTS(self):
+        return int(os.environ.get('SERENDIPITY_MIN_INSIGHTS', '3'))
+    
+    @property
+    def SERENDIPITY_MAX_MEMORY_SIZE_MB(self):
+        return int(os.environ.get('SERENDIPITY_MAX_MEMORY_SIZE_MB', '50'))
+    
+    @property
+    def SERENDIPITY_ANALYSIS_TIMEOUT(self):
+        return int(os.environ.get('SERENDIPITY_ANALYSIS_TIMEOUT', '120'))
+    
+    # Performance Optimization Configuration
+    @property
+    def SERENDIPITY_MEMORY_CACHE_MAX_ENTRIES(self):
+        return int(os.environ.get('SERENDIPITY_MEMORY_CACHE_MAX_ENTRIES', '500'))
+    
+    @property
+    def SERENDIPITY_MEMORY_CACHE_MAX_SIZE_MB(self):
+        return float(os.environ.get('SERENDIPITY_MEMORY_CACHE_MAX_SIZE_MB', '50.0'))
+    
+    @property
+    def SERENDIPITY_MEMORY_CACHE_TTL(self):
+        return int(os.environ.get('SERENDIPITY_MEMORY_CACHE_TTL', '3600'))
+    
+    @property
+    def SERENDIPITY_ANALYSIS_CACHE_MAX_ENTRIES(self):
+        return int(os.environ.get('SERENDIPITY_ANALYSIS_CACHE_MAX_ENTRIES', '100'))
+    
+    @property
+    def SERENDIPITY_ANALYSIS_CACHE_MAX_SIZE_MB(self):
+        return float(os.environ.get('SERENDIPITY_ANALYSIS_CACHE_MAX_SIZE_MB', '200.0'))
+    
+    @property
+    def SERENDIPITY_ANALYSIS_CACHE_TTL(self):
+        return int(os.environ.get('SERENDIPITY_ANALYSIS_CACHE_TTL', '1800'))
+    
+    @property
+    def SERENDIPITY_FORMATTED_CACHE_MAX_ENTRIES(self):
+        return int(os.environ.get('SERENDIPITY_FORMATTED_CACHE_MAX_ENTRIES', '200'))
+    
+    @property
+    def SERENDIPITY_FORMATTED_CACHE_MAX_SIZE_MB(self):
+        return float(os.environ.get('SERENDIPITY_FORMATTED_CACHE_MAX_SIZE_MB', '100.0'))
+    
+    @property
+    def SERENDIPITY_FORMATTED_CACHE_TTL(self):
+        return int(os.environ.get('SERENDIPITY_FORMATTED_CACHE_TTL', '1800'))
+    
+    # Queue Management Configuration
+    @property
+    def SERENDIPITY_MAX_QUEUE_SIZE(self):
+        return int(os.environ.get('SERENDIPITY_MAX_QUEUE_SIZE', '100'))
+    
+    @property
+    def SERENDIPITY_MAX_CONCURRENT_WORKERS(self):
+        return int(os.environ.get('SERENDIPITY_MAX_CONCURRENT_WORKERS', '3'))
+    
+    @property
+    def SERENDIPITY_WORKER_TIMEOUT(self):
+        return int(os.environ.get('SERENDIPITY_WORKER_TIMEOUT', '300'))
+    
+    @property
+    def SERENDIPITY_QUEUE_TIMEOUT(self):
+        return int(os.environ.get('SERENDIPITY_QUEUE_TIMEOUT', '600'))
+    
+    # Chunking Configuration
+    @property
+    def SERENDIPITY_MAX_CHUNK_SIZE(self):
+        return int(os.environ.get('SERENDIPITY_MAX_CHUNK_SIZE', '8000'))
+    
+    @property
+    def SERENDIPITY_CHUNK_OVERLAP(self):
+        return int(os.environ.get('SERENDIPITY_CHUNK_OVERLAP', '200'))
+    
     def get_config_dict(self) -> Dict[str, Any]:
         """Return configuration as dictionary for easy access"""
         config_dict = {}
@@ -166,6 +242,17 @@ class Config:
         
         if self.MAX_MESSAGE_LENGTH <= 0:
             issues.append("MAX_MESSAGE_LENGTH must be positive")
+        
+        # Validate serendipity configuration
+        if self.ENABLE_SERENDIPITY_ENGINE:
+            if self.SERENDIPITY_MIN_INSIGHTS <= 0:
+                issues.append("SERENDIPITY_MIN_INSIGHTS must be positive")
+            
+            if self.SERENDIPITY_MAX_MEMORY_SIZE_MB <= 0:
+                issues.append("SERENDIPITY_MAX_MEMORY_SIZE_MB must be positive")
+            
+            if self.SERENDIPITY_ANALYSIS_TIMEOUT <= 0:
+                issues.append("SERENDIPITY_ANALYSIS_TIMEOUT must be positive")
         
         return issues
 
@@ -345,6 +432,13 @@ def print_config_summary(config: Config) -> None:
     print(f"Serendipity Engine: {config.ENABLE_SERENDIPITY_ENGINE}")
     print(f"Prompt Customization: {config.ENABLE_PROMPT_CUSTOMIZATION}")
     print(f"Performance Monitoring: {config.ENABLE_PERFORMANCE_MONITORING}")
+    
+    # Serendipity configuration
+    if config.ENABLE_SERENDIPITY_ENGINE:
+        print("\n=== Serendipity Engine Configuration ===")
+        print(f"Min Insights Required: {config.SERENDIPITY_MIN_INSIGHTS}")
+        print(f"Max Memory Size (MB): {config.SERENDIPITY_MAX_MEMORY_SIZE_MB}")
+        print(f"Analysis Timeout (s): {config.SERENDIPITY_ANALYSIS_TIMEOUT}")
     
     # Validate configuration
     issues = config.validate_config()

@@ -363,8 +363,8 @@ def security_required(validate_json: bool = True, validate_conversation: bool = 
         @wraps(func)
         def wrapper(*args, **kwargs):
             try:
-                # Validate content type for POST requests
-                if request.method == 'POST':
+                # Validate content type for POST requests (only if JSON validation is enabled)
+                if validate_json and request.method == 'POST':
                     if not request.is_json:
                         return jsonify({
                             "error": "Invalid request format",

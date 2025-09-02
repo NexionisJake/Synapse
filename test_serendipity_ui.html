@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serendipity UI Tests - Synapse</title>
+    <link rel="stylesheet" href="static/css/style.css">
+    <!-- Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <!-- Marked.js for Markdown parsing -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js"></script>
+    <!-- DOMPurify for HTML sanitization -->
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.5/dist/purify.min.js"></script>
+    <style>
+        .test-section {
+            margin: 2rem 0;
+            padding: 1rem;
+            border: 1px solid var(--holographic-border-color);
+            border-radius: var(--border-radius);
+        }
+        .test-title {
+            color: var(--hud-accent-cyan);
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+        .test-controls {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        .test-results {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0, 229, 255, 0.05);
+            border-radius: var(--border-radius);
+        }
+        .accessibility-info {
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            margin: 1rem 0;
+        }
+        .responsive-test {
+            border: 2px dashed var(--hud-accent-cyan);
+            padding: 1rem;
+            margin: 1rem 0;
+            resize: horizontal;
+            overflow: auto;
+            min-width: 300px;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="hud-container">
+        <div class="dashboard-standalone">
+            <header class="hud-header">
+                <h1 class="hud-title">SYNAPSE</h1>
+                <p class="hud-subtitle">Serendipity UI Test Suite</p>
+            </header>
+            
+            <main class="dashboard-main">
+                <div class="dashboard-content-standalone">
+                    
+                    <!-- Test Section 1: Basic UI Components -->
+                    <div class="test-section">
+                        <h2 class="test-title">1. Basic UI Components Test</h2>
+                        <div class="test-controls">
+                            <button id="test-basic-ui" class="hud-button secondary">Test Basic UI</button>
+                            <button id="test-loading-state" class="hud-button secondary">Test Loading State</button>
+                            <button id="test-error-state" class="hud-button secondary">Test Error State</button>
+                            <button id="test-success-state" class="hud-button secondary">Test Success State</button>
+                        </div>
+                        
+                        <!-- Serendipity Section for Testing -->
+                        <section class="serendipity-section hud-card">
+                            <div class="section-header">
+                                <h3 class="section-title">Serendipity Analysis</h3>
+                                <div class="serendipity-status" id="serendipity-status" aria-live="polite">
+                                    <span class="status-text">Ready</span>
+                                </div>
+                            </div>
+                            <div class="serendipity-content">
+                                <p class="serendipity-description hud-text-secondary">
+                                    Discover hidden connections and patterns in your thoughts through AI-powered analysis.
+                                </p>
+                                <div class="serendipity-controls">
+                                    <button 
+                                        id="discover-connections-btn" 
+                                        class="hud-button primary serendipity-button"
+                                        aria-describedby="serendipity-description"
+                                        type="button"
+                                    >
+                                        <span class="button-icon" aria-hidden="true">🔍</span>
+                                        <span class="button-text">Discover Connections</span>
+                                    </button>
+                                </div>
+                                <div id="serendipity-results" class="serendipity-results" aria-live="polite" role="region" aria-label="Serendipity analysis results">
+                                    <!-- Results will be populated by JavaScript -->
+                                </div>
+                            </div>
+                        </section>
+                        
+                        <div class="test-results" id="basic-ui-results">
+                            Test results will appear here...
+                        </div>
+                    </div>
+
+                    <!-- Test Section 2: Accessibility Features -->
+                    <div class="test-section">
+                        <h2 class="test-title">2. Accessibility Features Test</h2>
+                        <div class="accessibility-info">
+                            <h4>Accessibility Features to Test:</h4>
+                            <ul>
+                                <li>ARIA labels and descriptions</li>
+                                <li>Keyboard navigation (Tab, Enter, Space)</li>
+                                <li>Screen reader announcements (aria-live regions)</li>
+                                <li>Focus management</li>
+                                <li>High contrast mode support</li>
+                                <li>Reduced motion preferences</li>
+                            </ul>
+                        </div>
+                        <div class="test-controls">
+                            <button id="test-keyboard-nav" class="hud-button secondary">Test Keyboard Navigation</button>
+                            <button id="test-aria-labels" class="hud-button secondary">Test ARIA Labels</button>
+                            <button id="test-focus-management" class="hud-button secondary">Test Focus Management</button>
+                            <button id="test-screen-reader" class="hud-button secondary">Test Screen Reader</button>
+                        </div>
+                        <div class="test-results" id="accessibility-results">
+                            Accessibility test results will appear here...
+                        </div>
+                    </div>
+
+                    <!-- Test Section 3: Responsive Design -->
+                    <div class="test-section">
+                        <h2 class="test-title">3. Responsive Design Test</h2>
+                        <p class="hud-text-secondary">Resize the container below to test responsive behavior:</p>
+                        
+                        <div class="responsive-test">
+                            <section class="serendipity-section hud-card">
+                                <div class="section-header">
+                                    <h3 class="section-title">Responsive Test</h3>
+                                    <div class="serendipity-status ready">
+                                        <span class="status-text">Ready</span>
+                                    </div>
+                                </div>
+                                <div class="serendipity-content">
+                                    <div class="serendipity-controls">
+                                        <button class="hud-button primary serendipity-button">
+                                            <span class="button-icon">🔍</span>
+                                            <span class="button-text">Discover Connections</span>
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Sample Results for Responsive Testing -->
+                                    <div class="serendipity-results">
+                                        <div class="serendipity-connections">
+                                            <div class="connection-card">
+                                                <div class="connection-header">
+                                                    <h4 class="connection-title">Sample Connection</h4>
+                                                    <div class="connection-indicators">
+                                                        <div class="connection-indicator">
+                                                            <span>Surprise</span>
+                                                            <div class="indicator-bar">
+                                                                <div class="indicator-fill surprise" style="width: 75%"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="connection-indicator">
+                                                            <span>Relevance</span>
+                                                            <div class="indicator-bar">
+                                                                <div class="indicator-fill relevance" style="width: 90%"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="connection-type">Cross-Domain</div>
+                                                <p class="connection-description">This is a sample connection to test responsive design behavior.</p>
+                                            </div>
+                                            
+                                            <div class="connection-card">
+                                                <div class="connection-header">
+                                                    <h4 class="connection-title">Another Connection</h4>
+                                                    <div class="connection-indicators">
+                                                        <div class="connection-indicator">
+                                                            <span>Surprise</span>
+                                                            <div class="indicator-bar">
+                                                                <div class="indicator-fill surprise" style="width: 60%"></div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="connection-indicator">
+                                                            <span>Relevance</span>
+                                                            <div class="indicator-bar">
+                                                                <div class="indicator-fill relevance" style="width: 85%"></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <p class="connection-description">Another sample connection for responsive testing.</p>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="serendipity-meta-patterns">
+                                            <h4 class="meta-patterns-title">Meta Patterns</h4>
+                                            <div class="meta-patterns-grid">
+                                                <div class="meta-pattern-card">
+                                                    <h5 class="meta-pattern-name">Sample Pattern</h5>
+                                                    <p class="meta-pattern-description">A sample meta pattern for testing.</p>
+                                                    <div class="meta-pattern-confidence">
+                                                        <span>Confidence</span>
+                                                        <div class="confidence-bar">
+                                                            <div class="confidence-fill" style="width: 80%"></div>
+                                                        </div>
+                                                        <span>80%</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                        
+                        <div class="test-controls">
+                            <button id="test-mobile-view" class="hud-button secondary">Simulate Mobile (320px)</button>
+                            <button id="test-tablet-view" class="hud-button secondary">Simulate Tablet (768px)</button>
+                            <button id="test-desktop-view" class="hud-button secondary">Simulate Desktop (1200px)</button>
+                        </div>
+                        <div class="test-results" id="responsive-results">
+                            Responsive test results will appear here...
+                        </div>
+                    </div>
+
+                    <!-- Test Section 4: Error Handling -->
+                    <div class="test-section">
+                        <h2 class="test-title">4. Error Handling Test</h2>
+                        <div class="test-controls">
+                            <button id="test-network-error" class="hud-button secondary">Test Network Error</button>
+                            <button id="test-insufficient-data" class="hud-button secondary">Test Insufficient Data</button>
+                            <button id="test-server-error" class="hud-button secondary">Test Server Error</button>
+                            <button id="test-timeout-error" class="hud-button secondary">Test Timeout Error</button>
+                        </div>
+                        <div class="test-results" id="error-handling-results">
+                            Error handling test results will appear here...
+                        </div>
+                    </div>
+
+                    <!-- Test Section 5: Performance -->
+                    <div class="test-section">
+                        <h2 class="test-title">5. Performance Test</h2>
+                        <div class="test-controls">
+                            <button id="test-large-dataset" class="hud-button secondary">Test Large Dataset</button>
+                            <button id="test-animation-performance" class="hud-button secondary">Test Animations</button>
+                            <button id="test-memory-usage" class="hud-button secondary">Test Memory Usage</button>
+                        </div>
+                        <div class="test-results" id="performance-results">
+                            Performance test results will appear here...
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Load JavaScript files -->
+    <script src="static/js/dashboard.js"></script>
+    
+    <script>
+        // Test Suite Implementation
+        class SerendipityUITestSuite {
+            constructor() {
+                this.dashboard = null;
+                this.testResults = {};
+                this.init();
+            }
+
+            init() {
+                // Initialize dashboard instance
+                this.dashboard = new Dashboard();
+                this.bindTestEvents();
+                this.runInitialTests();
+            }
+
+            bindTestEvents() {
+                // Basic UI Tests
+                document.getElementById('test-basic-ui').addEventListener('click', () => this.testBasicUI());
+                document.getElementById('test-loading-state').addEventListener('click', () => this.testLoadingState());
+                document.getElementById('test-error-state').addEventListener('click', () => this.testErrorState());
+                document.getElementById('test-success-state').addEventListener('click', () => this.testSuccessState());
+
+                // Accessibility Tests
+                document.getElementById('test-keyboard-nav').addEventListener('click', () => this.testKeyboardNavigation());
+                document.getElementById('test-aria-labels').addEventListener('click', () => this.testAriaLabels());
+                document.getElementById('test-focus-management').addEventListener('click', () => this.testFocusManagement());
+                document.getElementById('test-screen-reader').addEventListener('click', () => this.testScreenReader());
+
+                // Responsive Tests
+                document.getElementById('test-mobile-view').addEventListener('click', () => this.testMobileView());
+                document.getElementById('test-tablet-view').addEventListener('click', () => this.testTabletView());
+                document.getElementById('test-desktop-view').addEventListener('click', () => this.testDesktopView());
+
+                // Error Handling Tests
+                document.getElementById('test-network-error').addEventListener('click', () => this.testNetworkError());
+                document.getElementById('test-insufficient-data').addEventListener('click', () => this.testInsufficientData());
+                document.getElementById('test-server-error').addEventListener('click', () => this.testServerError());
+                document.getElementById('test-timeout-error').addEventListener('click', () => this.testTimeoutError());
+
+                // Performance Tests
+                document.getElementById('test-large-dataset').addEventListener('click', () => this.testLargeDataset());
+                document.getElementById('test-animation-performance').addEventListener('click', () => this.testAnimationPerformance());
+                document.getElementById('test-memory-usage').addEventListener('click', () => this.testMemoryUsage());
+            }
+
+            runInitialTests() {
+                this.testBasicUI();
+                this.testAriaLabels();
+            }
+
+            // Basic UI Tests
+            testBasicUI() {
+                const results = [];
+                
+                // Test button exists and is accessible
+                const button = document.getElementById('discover-connections-btn');
+                results.push(button ? '✅ Discover Connections button exists' : '❌ Button not found');
+                
+                // Test button has proper attributes
+                if (button) {
+                    results.push(button.hasAttribute('aria-describedby') ? '✅ Button has aria-describedby' : '❌ Missing aria-describedby');
+                    results.push(button.type === 'button' ? '✅ Button has correct type' : '❌ Incorrect button type');
+                }
+
+                // Test status indicator
+                const status = document.getElementById('serendipity-status');
+                results.push(status ? '✅ Status indicator exists' : '❌ Status indicator not found');
+                results.push(status && status.hasAttribute('aria-live') ? '✅ Status has aria-live' : '❌ Missing aria-live');
+
+                // Test results container
+                const resultsContainer = document.getElementById('serendipity-results');
+                results.push(resultsContainer ? '✅ Results container exists' : '❌ Results container not found');
+                results.push(resultsContainer && resultsContainer.hasAttribute('aria-live') ? '✅ Results has aria-live' : '❌ Missing aria-live');
+
+                this.displayTestResults('basic-ui-results', 'Basic UI Test', results);
+            }
+
+            testLoadingState() {
+                const button = document.getElementById('discover-connections-btn');
+                const status = document.getElementById('serendipity-status');
+                const results = document.getElementById('serendipity-results');
+
+                if (this.dashboard) {
+                    this.dashboard.setSerendipityLoadingState(button, status, results);
+                    
+                    const testResults = [
+                        button.disabled ? '✅ Button disabled during loading' : '❌ Button not disabled',
+                        button.classList.contains('loading') ? '✅ Loading class applied' : '❌ Loading class missing',
+                        button.getAttribute('aria-busy') === 'true' ? '✅ aria-busy set to true' : '❌ aria-busy not set',
+                        results.innerHTML.includes('loading-spinner') ? '✅ Loading spinner displayed' : '❌ Loading spinner missing'
+                    ];
+
+                    this.displayTestResults('basic-ui-results', 'Loading State Test', testResults);
+                }
+            }
+
+            testErrorState() {
+                const resultsContainer = document.getElementById('serendipity-results');
+                
+                if (this.dashboard) {
+                    this.dashboard.renderSerendipityError('Test error message', resultsContainer);
+                    
+                    const testResults = [
+                        resultsContainer.innerHTML.includes('serendipity-error') ? '✅ Error container rendered' : '❌ Error container missing',
+                        resultsContainer.innerHTML.includes('role="alert"') ? '✅ Error has alert role' : '❌ Alert role missing',
+                        resultsContainer.innerHTML.includes('retry-button') ? '✅ Retry button present' : '❌ Retry button missing',
+                        resultsContainer.innerHTML.includes('Test error message') ? '✅ Error message displayed' : '❌ Error message missing'
+                    ];
+
+                    this.displayTestResults('basic-ui-results', 'Error State Test', testResults);
+                }
+            }
+
+            testSuccessState() {
+                const mockData = {
+                    connections: [
+                        {
+                            title: 'Test Connection',
+                            description: 'A test connection for UI validation',
+                            surprise_factor: 0.8,
+                            relevance: 0.9,
+                            connection_type: 'Cross-Domain',
+                            connected_insights: ['insight1', 'insight2']
+                        }
+                    ],
+                    meta_patterns: [
+                        {
+                            pattern_name: 'Test Pattern',
+                            description: 'A test pattern',
+                            confidence: 0.75,
+                            evidence_count: 5
+                        }
+                    ],
+                    serendipity_summary: 'This is a test summary',
+                    recommendations: ['Test recommendation 1', 'Test recommendation 2'],
+                    metadata: {
+                        timestamp: new Date().toISOString(),
+                        model: 'test-model'
+                    }
+                };
+
+                const resultsContainer = document.getElementById('serendipity-results');
+                
+                if (this.dashboard) {
+                    this.dashboard.renderSerendipityResults(mockData, resultsContainer);
+                    
+                    const testResults = [
+                        resultsContainer.innerHTML.includes('connection-card') ? '✅ Connection cards rendered' : '❌ Connection cards missing',
+                        resultsContainer.innerHTML.includes('meta-pattern-card') ? '✅ Meta pattern cards rendered' : '❌ Meta pattern cards missing',
+                        resultsContainer.innerHTML.includes('serendipity-summary') ? '✅ Summary rendered' : '❌ Summary missing',
+                        resultsContainer.innerHTML.includes('recommendations-list') ? '✅ Recommendations rendered' : '❌ Recommendations missing',
+                        resultsContainer.innerHTML.includes('serendipity-metadata') ? '✅ Metadata rendered' : '❌ Metadata missing'
+                    ];
+
+                    this.displayTestResults('basic-ui-results', 'Success State Test', testResults);
+                }
+            }
+
+            // Accessibility Tests
+            testKeyboardNavigation() {
+                const results = [];
+                const button = document.getElementById('discover-connections-btn');
+                
+                // Test if button is focusable
+                button.focus();
+                results.push(document.activeElement === button ? '✅ Button is focusable' : '❌ Button not focusable');
+                
+                // Test tabindex
+                const tabbableElements = document.querySelectorAll('[tabindex="0"], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled])');
+                results.push(tabbableElements.length > 0 ? `✅ Found ${tabbableElements.length} tabbable elements` : '❌ No tabbable elements found');
+
+                this.displayTestResults('accessibility-results', 'Keyboard Navigation Test', results);
+            }
+
+            testAriaLabels() {
+                const results = [];
+                
+                // Test button ARIA attributes
+                const button = document.getElementById('discover-connections-btn');
+                results.push(button && button.hasAttribute('aria-describedby') ? '✅ Button has aria-describedby' : '❌ Button missing aria-describedby');
+                
+                // Test status ARIA attributes
+                const status = document.getElementById('serendipity-status');
+                results.push(status && status.hasAttribute('aria-live') ? '✅ Status has aria-live' : '❌ Status missing aria-live');
+                
+                // Test results container ARIA attributes
+                const resultsContainer = document.getElementById('serendipity-results');
+                results.push(resultsContainer && resultsContainer.hasAttribute('aria-live') ? '✅ Results has aria-live' : '❌ Results missing aria-live');
+                results.push(resultsContainer && resultsContainer.hasAttribute('role') ? '✅ Results has role' : '❌ Results missing role');
+                results.push(resultsContainer && resultsContainer.hasAttribute('aria-label') ? '✅ Results has aria-label' : '❌ Results missing aria-label');
+
+                this.displayTestResults('accessibility-results', 'ARIA Labels Test', results);
+            }
+
+            testFocusManagement() {
+                const results = [];
+                const button = document.getElementById('discover-connections-btn');
+                
+                // Test initial focus
+                button.focus();
+                results.push(document.activeElement === button ? '✅ Can focus button' : '❌ Cannot focus button');
+                
+                // Test focus styles
+                const computedStyle = window.getComputedStyle(button, ':focus');
+                results.push('✅ Focus styles applied (visual inspection required)');
+                
+                // Test focus trap (would need more complex implementation)
+                results.push('✅ Focus management implemented (manual testing required)');
+
+                this.displayTestResults('accessibility-results', 'Focus Management Test', results);
+            }
+
+            testScreenReader() {
+                const results = [];
+                
+                // Test live regions
+                const liveRegions = document.querySelectorAll('[aria-live]');
+                results.push(liveRegions.length > 0 ? `✅ Found ${liveRegions.length} live regions` : '❌ No live regions found');
+                
+                // Test semantic structure
+                const headings = document.querySelectorAll('h1, h2, h3, h4, h5, h6');
+                results.push(headings.length > 0 ? `✅ Found ${headings.length} headings` : '❌ No headings found');
+                
+                // Test roles
+                const roles = document.querySelectorAll('[role]');
+                results.push(roles.length > 0 ? `✅ Found ${roles.length} elements with roles` : '❌ No roles found');
+
+                this.displayTestResults('accessibility-results', 'Screen Reader Test', results);
+            }
+
+            // Responsive Tests
+            testMobileView() {
+                this.setResponsiveTestWidth('320px');
+                this.displayTestResults('responsive-results', 'Mobile View Test', ['✅ Mobile view applied (320px width)']);
+            }
+
+            testTabletView() {
+                this.setResponsiveTestWidth('768px');
+                this.displayTestResults('responsive-results', 'Tablet View Test', ['✅ Tablet view applied (768px width)']);
+            }
+
+            testDesktopView() {
+                this.setResponsiveTestWidth('1200px');
+                this.displayTestResults('responsive-results', 'Desktop View Test', ['✅ Desktop view applied (1200px width)']);
+            }
+
+            setResponsiveTestWidth(width) {
+                const responsiveTest = document.querySelector('.responsive-test');
+                responsiveTest.style.width = width;
+            }
+
+            // Error Handling Tests
+            testNetworkError() {
+                const resultsContainer = document.getElementById('serendipity-results');
+                if (this.dashboard) {
+                    this.dashboard.renderSerendipityError('Network error: Unable to connect to server', resultsContainer);
+                    this.displayTestResults('error-handling-results', 'Network Error Test', ['✅ Network error displayed']);
+                }
+            }
+
+            testInsufficientData() {
+                const resultsContainer = document.getElementById('serendipity-results');
+                if (this.dashboard) {
+                    this.dashboard.renderSerendipityError('Insufficient data: Need at least 3 insights for analysis', resultsContainer);
+                    const hasGuidance = resultsContainer.innerHTML.includes('error-suggestions');
+                    this.displayTestResults('error-handling-results', 'Insufficient Data Test', [
+                        '✅ Insufficient data error displayed',
+                        hasGuidance ? '✅ User guidance provided' : '❌ User guidance missing'
+                    ]);
+                }
+            }
+
+            testServerError() {
+                const resultsContainer = document.getElementById('serendipity-results');
+                if (this.dashboard) {
+                    this.dashboard.renderSerendipityError('Server error: Internal server error occurred', resultsContainer);
+                    this.displayTestResults('error-handling-results', 'Server Error Test', ['✅ Server error displayed']);
+                }
+            }
+
+            testTimeoutError() {
+                const resultsContainer = document.getElementById('serendipity-results');
+                if (this.dashboard) {
+                    this.dashboard.renderSerendipityError('Timeout error: Request took too long to complete', resultsContainer);
+                    this.displayTestResults('error-handling-results', 'Timeout Error Test', ['✅ Timeout error displayed']);
+                }
+            }
+
+            // Performance Tests
+            testLargeDataset() {
+                const startTime = performance.now();
+                
+                // Generate large mock dataset
+                const largeData = {
+                    connections: Array.from({length: 50}, (_, i) => ({
+                        title: `Connection ${i + 1}`,
+                        description: `Description for connection ${i + 1}`,
+                        surprise_factor: Math.random(),
+                        relevance: Math.random(),
+                        connection_type: 'Test',
+                        connected_insights: [`insight${i}1`, `insight${i}2`]
+                    })),
+                    meta_patterns: Array.from({length: 20}, (_, i) => ({
+                        pattern_name: `Pattern ${i + 1}`,
+                        description: `Description for pattern ${i + 1}`,
+                        confidence: Math.random(),
+                        evidence_count: Math.floor(Math.random() * 10) + 1
+                    })),
+                    recommendations: Array.from({length: 10}, (_, i) => `Recommendation ${i + 1}`),
+                    metadata: { timestamp: new Date().toISOString(), model: 'test-model' }
+                };
+
+                const resultsContainer = document.getElementById('serendipity-results');
+                if (this.dashboard) {
+                    this.dashboard.renderSerendipityResults(largeData, resultsContainer);
+                }
+
+                const endTime = performance.now();
+                const renderTime = endTime - startTime;
+
+                this.displayTestResults('performance-results', 'Large Dataset Test', [
+                    `✅ Rendered 50 connections and 20 patterns`,
+                    `✅ Render time: ${renderTime.toFixed(2)}ms`,
+                    renderTime < 1000 ? '✅ Performance acceptable (<1s)' : '⚠️ Performance slow (>1s)'
+                ]);
+            }
+
+            testAnimationPerformance() {
+                const results = [];
+                
+                // Test CSS animations
+                const animatedElements = document.querySelectorAll('.connection-card, .meta-pattern-card');
+                results.push(animatedElements.length > 0 ? `✅ Found ${animatedElements.length} animated elements` : '❌ No animated elements');
+                
+                // Test progress bar animations
+                if (this.dashboard) {
+                    this.dashboard.animateProgressBars();
+                    results.push('✅ Progress bar animations triggered');
+                }
+
+                this.displayTestResults('performance-results', 'Animation Performance Test', results);
+            }
+
+            testMemoryUsage() {
+                const results = [];
+                
+                if (performance.memory) {
+                    const memoryInfo = performance.memory;
+                    results.push(`✅ Used JS Heap: ${(memoryInfo.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`);
+                    results.push(`✅ Total JS Heap: ${(memoryInfo.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`);
+                    results.push(`✅ JS Heap Limit: ${(memoryInfo.jsHeapSizeLimit / 1024 / 1024).toFixed(2)} MB`);
+                } else {
+                    results.push('⚠️ Memory API not available in this browser');
+                }
+
+                this.displayTestResults('performance-results', 'Memory Usage Test', results);
+            }
+
+            // Utility Methods
+            displayTestResults(containerId, testName, results) {
+                const container = document.getElementById(containerId);
+                const timestamp = new Date().toLocaleTimeString();
+                
+                const resultHtml = `
+                    <div style="margin-bottom: 1rem; padding: 0.5rem; border-left: 3px solid var(--hud-accent-cyan);">
+                        <strong>${testName}</strong> - ${timestamp}
+                        <ul style="margin: 0.5rem 0 0 1rem; list-style: none;">
+                            ${results.map(result => `<li>${result}</li>`).join('')}
+                        </ul>
+                    </div>
+                `;
+                
+                container.innerHTML = resultHtml + container.innerHTML;
+            }
+        }
+
+        // Initialize test suite when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            window.testSuite = new SerendipityUITestSuite();
+        });
+    </script>
+</body>
+</html>

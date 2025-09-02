@@ -20,6 +20,10 @@
                 <h1 class="hud-title">SYNAPSE</h1>
                 <p class="hud-subtitle">Your AI Cognitive Partner</p>
                 <nav class="dashboard-nav">
+                    <a href="{{ url_for('dashboard') }}" class="hud-button secondary">
+                        <span class="button-icon">📊</span>
+                        Dashboard
+                    </a>
                     <a href="{{ url_for('prompts') }}" class="hud-button secondary">
                         <span class="button-icon">⚙️</span>
                         Prompts
@@ -140,6 +144,35 @@
                                 <div class="chart-wrapper">
                                     <canvas id="emotional-landscape-chart" width="300" height="200"></canvas>
                                 </div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- Serendipity Analysis Section -->
+                    <section class="serendipity-section hud-card">
+                        <div class="section-header">
+                            <h3 class="section-title">Serendipity Analysis</h3>
+                            <div class="serendipity-status" id="serendipity-status" aria-live="polite">
+                                <span class="status-text">Ready</span>
+                            </div>
+                        </div>
+                        <div class="serendipity-content">
+                            <p class="serendipity-description hud-text-secondary">
+                                Discover hidden connections and patterns in your thoughts through AI-powered analysis.
+                            </p>
+                            <div class="serendipity-controls">
+                                <button 
+                                    id="discover-connections-btn" 
+                                    class="hud-button primary serendipity-button"
+                                    aria-describedby="serendipity-description"
+                                    type="button"
+                                >
+                                    <span class="button-icon" aria-hidden="true">🔍</span>
+                                    <span class="button-text">Discover Connections</span>
+                                </button>
+                            </div>
+                            <div id="serendipity-results" class="serendipity-results" aria-live="polite" role="region" aria-label="Serendipity analysis results">
+                                <!-- Results will be populated by JavaScript -->
                             </div>
                         </div>
                     </section>

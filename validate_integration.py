@@ -91,7 +91,6 @@ def validate_integration():
         
         required_endpoints = [
             '/api/insights',
-            '/api/serendipity',
             '/dashboard'
         ]
         

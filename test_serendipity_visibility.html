@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Serendipity Visibility Test - Synapse</title>
+    <link rel="stylesheet" href="static/css/style.css">
+</head>
+<body>
+    <div class="hud-container">
+        <!-- Chat Pane (70%) -->
+        <div class="chat-pane">
+            <header class="hud-header">
+                <h1 class="hud-title">SYNAPSE</h1>
+                <p class="hud-subtitle">Chat Interface</p>
+            </header>
+            <main class="chat-main">
+                <div class="test-content" style="padding: 20px; color: var(--hud-text-primary);">
+                    <h3>Test Instructions:</h3>
+                    <ol>
+                        <li>Look at the Cognitive Dashboard on the right</li>
+                        <li>Scroll down to find the Serendipity Analysis section</li>
+                        <li>Verify the "Discover Connections" button is fully visible</li>
+                        <li>Check that the section has a subtle glow/highlight</li>
+                        <li>Test clicking the button to ensure it's functional</li>
+                    </ol>
+                    <p><strong>Expected Result:</strong> The Serendipity section should be clearly visible, accessible, and stand out with enhanced styling.</p>
+                </div>
+            </main>
+        </div>
+        
+        <!-- Cognitive Dashboard (30%) -->
+        <div class="cognitive-dashboard">
+            <header class="dashboard-header">
+                <h2 class="dashboard-title">COGNITIVE ANALYSIS</h2>
+                <div class="dashboard-controls">
+                    <button class="hud-button secondary" id="refresh-dashboard">
+                        <span class="button-icon">↻</span>
+                    </button>
+                </div>
+            </header>
+            
+            <div class="dashboard-content">
+                <div class="dashboard-content-inner">
+                    <!-- Statistics Overview -->
+                    <section class="stats-section hud-card">
+                        <h3 class="section-title">Memory Overview</h3>
+                        <div class="stats-grid">
+                            <div class="stat-card glass-panel glow-hover">
+                                <div class="stat-number hud-text-accent">0</div>
+                                <div class="stat-label hud-text-secondary">Insights</div>
+                            </div>
+                            <div class="stat-card glass-panel glow-hover">
+                                <div class="stat-number hud-text-accent">0</div>
+                                <div class="stat-label hud-text-secondary">Conversations</div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- Interactive Charts -->
+                    <section class="charts-section">
+                        <h3 class="section-title">Cognitive Patterns</h3>
+                        <div class="charts-grid">
+                            <div class="chart-container glass-panel">
+                                <div class="chart-header">
+                                    <h4 class="chart-title">Core Values</h4>
+                                    <div class="chart-status">Loading...</div>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <div class="chart-placeholder" style="height: 200px; display: flex; align-items: center; justify-content: center; color: var(--hud-text-secondary);">
+                                        📊 Chart Placeholder
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- Serendipity Analysis Section - This should be clearly visible -->
+                    <section class="serendipity-section hud-card">
+                        <div class="section-header">
+                            <h3 class="section-title">Serendipity Analysis</h3>
+                            <div class="serendipity-status" id="serendipity-status" aria-live="polite">
+                                <span class="status-text">Ready</span>
+                            </div>
+                        </div>
+                        <div class="serendipity-content">
+                            <p class="serendipity-description hud-text-secondary">
+                                Discover hidden connections and patterns in your thoughts through AI-powered analysis.
+                            </p>
+                            <div class="serendipity-controls">
+                                <button 
+                                    id="discover-connections-btn" 
+                                    class="hud-button primary serendipity-button"
+                                    aria-describedby="serendipity-description"
+                                    type="button"
+                                    onclick="alert('Serendipity button is working! ✨')"
+                                >
+                                    <span class="button-icon" aria-hidden="true">🔍</span>
+                                    <span class="button-text">Discover Connections</span>
+                                </button>
+                            </div>
+                            <div id="serendipity-results" class="serendipity-results" aria-live="polite" role="region" aria-label="Serendipity analysis results">
+                                <div style="padding: var(--spacing-md); color: var(--hud-text-secondary); text-align: center;">
+                                    Results will appear here after analysis
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <!-- Recent Insights -->
+                    <section class="insights-section">
+                        <h3 class="section-title">Recent Insights</h3>
+                        <div id="insights-container" class="insights-container">
+                            <div style="padding: var(--spacing-md); color: var(--hud-text-secondary); text-align: center;">
+                                No insights yet. Start chatting to generate insights!
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Simple test script
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 Serendipity Visibility Test Loaded');
+            
+            // Check if serendipity section is visible
+            const serendipitySection = document.querySelector('.serendipity-section');
+            if (serendipitySection) {
+                const rect = serendipitySection.getBoundingClientRect();
+                const isVisible = rect.top < window.innerHeight && rect.bottom > 0;
+                console.log('🔍 Serendipity section visibility:', isVisible);
+                console.log('📏 Serendipity section position:', {
+                    top: rect.top,
+                    bottom: rect.bottom,
+                    height: rect.height,
+                    windowHeight: window.innerHeight
+                });
+                
+                // Test button functionality
+                const button = document.getElementById('discover-connections-btn');
+                if (button) {
+                    console.log('✅ Serendipity button found and ready');
+                } else {
+                    console.log('❌ Serendipity button not found');
+                }
+            } else {
+                console.log('❌ Serendipity section not found');
+            }
+        });
+    </script>
+</body>
+</html>

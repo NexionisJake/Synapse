@@ -380,7 +380,6 @@ If problems persist:
 - **R**: Refresh dashboard data
 - **C**: Refresh charts
 - **F**: Toggle filter options
-- **S**: Open serendipity engine
 
 ### Chart Navigation
 - **Arrow Keys**: Navigate between charts
@@ -407,9 +406,8 @@ If problems persist:
 
 ### Dashboard Usage
 1. **Regular Check-ins**: Review insights periodically to track growth
-2. **Explore Connections**: Use the serendipity engine to find unexpected patterns
-3. **Monitor Trends**: Watch how your interests and patterns evolve over time
-4. **Export Data**: Save important insights for future reference
+2. **Monitor Trends**: Watch how your interests and patterns evolve over time
+3. **Export Data**: Save important insights for future reference
 
 ### Performance Tips
 1. **Keep Conversations Focused**: Very long conversations may slow performance

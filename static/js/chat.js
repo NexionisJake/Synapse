@@ -259,7 +259,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Update performance metrics
                     performanceMetrics.messageCount = conversationHistory.length;
 
-                    return;
+                    // If history is not empty after cleanup, we're done.
+                    // Otherwise, fall through to initialize with a welcome message.
+                    if (conversationHistory.length > 0) {
+                        return;
+                    }
                 }
             }
         } catch (error) {
@@ -1501,17 +1505,8 @@ function initializeDashboard() {
         });
     }
 
-    // Initialize dashboard if Dashboard class is available and required elements exist
-    if (typeof Dashboard !== 'undefined') {
-        const hasLoadingState = document.getElementById('loading-state');
-        const hasDashboardContent = document.getElementById('dashboard-content') || document.getElementById('dashboard-content-inner');
-
-        if (hasLoadingState || hasDashboardContent) {
-            window.dashboard = new Dashboard();
-        } else {
-            console.log('Dashboard elements not found in chat context, skipping dashboard initialization');
-        }
-    }
+    // The Dashboard object is now initialized in dashboard.js to prevent duplicates.
+    // This function just sets up event listeners that depend on the dashboard.
 }
 
 // Initialize performance monitoring

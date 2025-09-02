@@ -152,13 +152,19 @@ class LoadingFeedbackManager {
      * Test connection status by making a lightweight request
      */
     async testConnectionStatus() {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000); // 5-second timeout
+
         try {
             this.updateConnectionStatus('connecting');
             
             const response = await fetch('/api/health', {
                 method: 'GET',
-                timeout: 5000
+                signal: controller.signal // Use AbortController for timeout
             });
+
+            // Clear the timeout if the request completes in time
+            clearTimeout(timeoutId);
             
             if (response.ok) {
                 this.updateConnectionStatus('connected');
@@ -166,6 +172,7 @@ class LoadingFeedbackManager {
                 this.updateConnectionStatus('disconnected');
             }
         } catch (error) {
+            clearTimeout(timeoutId); // Also clear timeout on error
             console.warn('Connection test failed:', error);
             this.updateConnectionStatus('disconnected');
         }
