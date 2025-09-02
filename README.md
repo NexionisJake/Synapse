@@ -1,6 +1,6 @@
 # 🧠 Synapse AI - Advanced Cognitive Partner
 
-> **Version:** 2.0 | **Status:** Production Ready ✅ | **License:** Proprietary
+> **Version:** 2.0 | **Status:** Production Ready ✅ | **License:** MIT
 
 A sophisticated, local-first AI cognitive partner designed to enhance human thinking through Socratic questioning, pattern recognition, and serendipitous insights. Built with enterprise-grade performance optimization, comprehensive testing, and adaptive intelligence.
 
