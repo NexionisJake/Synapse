@@ -1,0 +1,27 @@
+version: "3.8"
+
+services:
+  synapse:
+    build: .
+    container_name: synapse_app
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "5000:5000"
+    volumes:
+      # Persist memory and log files on the host machine
+      - ./memory.json:/app/memory.json
+      - ./synapse_errors.log:/app/synapse_errors.log
+    healthcheck:
+      # Use the app's status endpoint for health checks
+      test: ["CMD", "curl", "-f", "http://localhost:5000/api/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+# Note: This setup assumes Ollama is running on the host machine.
+# To run Ollama in Docker, you would add another service here and
+# set OLLAMA_HOST in your .env file to point to the Ollama service name.
+# For example, if Ollama runs on the host (Docker Desktop):
+# OLLAMA_HOST=http://host.docker.internal:11434
